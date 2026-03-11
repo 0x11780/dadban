@@ -1,30 +1,32 @@
 // تایپ‌های پروژه نجوا
 
-export type Language = 'fa' | 'en';
+export type Language = "fa" | "en";
 
-export type AppScreen = 
-  | 'start'
-  | 'language'
-  | 'welcome'
-  | 'about'
-  | 'security'
-  | 'invite-code'
-  | 'passkey-register'
-  | 'passkey-verify'
-  | 'main-menu'
-  | 'my-tokens'
-  | 'report-step1'
-  | 'report-famous-list'
-  | 'report-manual-entry'
-  | 'report-documents'
-  | 'report-description'
-  | 'report-success'
-  | 'my-requests'
-  | 'request-detail'
-  | 'approval-list'
-  | 'error';
+export type AppScreen =
+  | "start"
+  | "language"
+  | "welcome"
+  | "about"
+  | "security"
+  | "invite-code"
+  | "login"
+  | "passkey-register"
+  | "passkey-verify"
+  | "main-menu"
+  | "my-tokens"
+  | "report-step1"
+  | "report-famous-list"
+  | "report-manual-entry"
+  | "report-documents"
+  | "report-description"
+  | "report-success"
+  | "my-requests"
+  | "request-detail"
+  | "approval-list"
+  | "invite-user"
+  | "error";
 
-export type RequestStatus = 'pending' | 'accepted' | 'rejected';
+export type RequestStatus = "pending" | "accepted" | "rejected";
 
 export interface User {
   id: string;

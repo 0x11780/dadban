@@ -1,66 +1,70 @@
 "use client";
 
-import { useState } from 'react';
-import { useApp } from '@/context/app-context';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AlertCircle, Upload, User } from 'lucide-react';
+import { useState } from "react";
+import { useApp } from "@/context/app-context";
+import { api } from "@/lib/edyen";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, Upload, User } from "lucide-react";
 
 export function ReportManualEntryScreen() {
   const { navigate, setReportPerson, goBack } = useApp();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [nationalCode, setNationalCode] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [nationalCode, setNationalCode] = useState("");
   const [personImage, setPersonImage] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log('[v0] User uploading person image:', file.name);
+      console.log("[v0] User uploading person image:", file.name);
       // TODO: Upload to server and get URL
       setPersonImage(URL.createObjectURL(file));
-      console.log('[v0] Person image preview created');
+      console.log("[v0] Person image preview created");
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!firstName || !lastName) {
-      setError('نام و نام خانوادگی الزامی است');
+      setError("نام و نام خانوادگی الزامی است");
       return;
     }
 
-    console.log('[v0] Creating manual person entry:', { firstName, lastName, nationalCode });
-
-    const person = {
-      id: crypto.randomUUID(),
-      firstName,
-      lastName,
-      nationalCode: nationalCode || undefined,
-      imageUrl: personImage || undefined,
-      isFamous: false,
-    };
-
-    setReportPerson(person);
-    console.log('[v0] Person data set, moving to documents');
-    navigate('report-documents');
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await api.people.post({
+        firstName,
+        lastName,
+        nationalCode: nationalCode || undefined,
+        imageUrl: personImage && personImage.startsWith("http") ? personImage : undefined,
+      });
+      if (error) throw new Error(String(error));
+      if (data) {
+        setReportPerson({ ...data, isFamous: false });
+        navigate("report-documents");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطا در ثبت اطلاعات");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-xl font-bold text-foreground">
-            ورود اطلاعات فرد
-          </CardTitle>
-          <CardDescription>
-            مشخصات فرد مورد نظر را وارد کنید
-          </CardDescription>
+          <CardTitle className="text-foreground text-xl font-bold">ورود اطلاعات فرد</CardTitle>
+          <CardDescription>مشخصات فرد مورد نظر را وارد کنید</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -98,19 +102,15 @@ export function ReportManualEntryScreen() {
 
             <div className="space-y-2">
               <Label>تصویر فرد (اختیاری)</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+              <div className="border-border rounded-lg border-2 border-dashed p-6 text-center">
                 {personImage ? (
                   <div className="space-y-2">
-                    <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-muted">
-                      <img 
-                        src={personImage} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="bg-muted mx-auto h-24 w-24 overflow-hidden rounded-full">
+                      <img src={personImage} alt="Preview" className="h-full w-full object-cover" />
                     </div>
-                    <Button 
+                    <Button
                       type="button"
-                      variant="ghost" 
+                      variant="ghost"
                       size="sm"
                       onClick={() => setPersonImage(null)}
                     >
@@ -119,10 +119,10 @@ export function ReportManualEntryScreen() {
                   </div>
                 ) : (
                   <label className="cursor-pointer">
-                    <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-2">
-                      <User className="h-8 w-8 text-muted-foreground" />
+                    <div className="bg-muted mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full">
+                      <User className="text-muted-foreground h-8 w-8" />
                     </div>
-                    <span className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+                    <span className="text-muted-foreground flex items-center justify-center gap-2 text-sm">
                       <Upload className="h-4 w-4" />
                       آپلود تصویر
                     </span>
@@ -138,22 +138,17 @@ export function ReportManualEntryScreen() {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 text-destructive bg-destructive/10 p-3 rounded-lg">
+              <div className="text-destructive bg-destructive/10 flex items-center gap-2 rounded-lg p-3">
                 <AlertCircle className="h-5 w-5" />
                 <span className="text-sm">{error}</span>
               </div>
             )}
 
-            <Button type="submit" className="w-full">
-              ادامه
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "در حال ثبت..." : "ادامه"}
             </Button>
 
-            <Button 
-              type="button"
-              onClick={goBack}
-              variant="ghost"
-              className="w-full"
-            >
+            <Button type="button" onClick={goBack} variant="ghost" className="w-full">
               بازگشت
             </Button>
           </form>

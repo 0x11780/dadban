@@ -1,38 +1,32 @@
 "use client";
 
-import { useApp } from '@/context/app-context';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Info } from 'lucide-react';
+import { useApp } from "@/context/app-context";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Info } from "lucide-react";
 
 export function AboutScreen() {
   const { goBack } = useApp();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-            <Info className="h-8 w-8 text-primary" />
+          <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <Info className="text-primary h-8 w-8" />
           </div>
-          <CardTitle className="text-xl font-bold text-foreground">
-            درباره نجوا
-          </CardTitle>
+          <CardTitle className="text-foreground text-xl font-bold">درباره دادبان</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground leading-relaxed text-justify">
-            نجوا یک پلتفرم امن برای گزارش‌دهی است. ما به شما کمک می‌کنیم تا بتوانید 
-            به صورت ناشناس و امن، گزارش‌های خود را ثبت کنید.
+          <p className="text-muted-foreground text-justify leading-relaxed">
+            دادبان یک پلتفرم امن برای گزارش‌دهی است. ما به شما کمک می‌کنیم تا بتوانید به صورت ناشناس و
+            امن، گزارش‌های خود را ثبت کنید.
           </p>
-          <p className="text-muted-foreground leading-relaxed text-justify">
-            هدف ما ایجاد شفافیت و کمک به اجرای عدالت است. تمام اطلاعات شما 
-            با بالاترین سطح امنیت محافظت می‌شود.
+          <p className="text-muted-foreground text-justify leading-relaxed">
+            هدف ما ایجاد شفافیت و کمک به اجرای عدالت است. تمام اطلاعات شما با بالاترین سطح امنیت
+            محافظت می‌شود.
           </p>
-          <Button 
-            onClick={goBack}
-            variant="outline"
-            className="w-full mt-6"
-          >
+          <Button onClick={goBack} variant="outline" className="mt-6 w-full">
             بازگشت
           </Button>
         </CardContent>
