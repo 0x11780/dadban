@@ -47,6 +47,13 @@ export function ReportBasicInfoScreen() {
             <Label htmlFor="title">
               عنوان گزارش <span className="text-destructive">*</span>
             </Label>
+
+            <Alert size="xs" variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                در عنوان نباید نام اشخاص یا اطلاعات حساس مانند کد ملی ذکر شود.
+              </AlertDescription>
+            </Alert>
             <Input
               id="title"
               value={title}
@@ -55,23 +62,26 @@ export function ReportBasicInfoScreen() {
               maxLength={120}
               dir="rtl"
             />
+
             <div className="text-muted-foreground flex justify-between text-xs">
               <span>{titleLength}/120 کاراکتر</span>
               {titleLength > 120 && <span className="text-destructive">حداکثر ۱۲۰ کاراکتر</span>}
             </div>
           </div>
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              در عنوان نباید نام اشخاص یا اطلاعات حساس مانند کد ملی ذکر شود.
-            </AlertDescription>
-          </Alert>
-
           <div className="space-y-2">
             <Label htmlFor="description">
               شرح کامل گزارش <span className="text-destructive">*</span>
             </Label>
+
+            <Alert size="xs" variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                متن گزارش نباید حاوی اسامی اشخاص باشد، اگر می‌خواهید به اسم شخص اشاره کنید، لطفاً از
+                متغیر XX استفاده کنید. مثال (در آن روز آقای XX ...).
+              </AlertDescription>
+            </Alert>
+
             <Textarea
               id="description"
               value={description}
@@ -84,7 +94,7 @@ export function ReportBasicInfoScreen() {
               rows={8}
               maxLength={10000}
               dir="rtl"
-              className="resize-none"
+              className="min-h-32 resize-none"
             />
             <div className="text-muted-foreground flex justify-between text-xs">
               <span>{descriptionLength}/10000 کاراکتر</span>
