@@ -39,7 +39,7 @@ export function RequestDetailScreen() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
+    <div className="bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-foreground text-xl font-bold">جزئیات درخواست</CardTitle>

@@ -34,7 +34,7 @@ export function MyRequestsScreen() {
   };
 
   return (
-    <div className="bg-background flex min-h-screen flex-col p-4">
+    <div className="bg-background flex flex-col p-4">
       <Card className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <CardHeader>
           <CardTitle className="text-foreground text-center text-xl font-bold">

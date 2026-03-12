@@ -18,7 +18,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { state, setLanguage } = useApp();
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background flex flex-col">
       {/* Header - visible on all pages */}
       <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
         <div className="container flex h-14 items-center justify-between px-4">

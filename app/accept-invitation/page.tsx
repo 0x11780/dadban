@@ -11,7 +11,7 @@ function AcceptInvitationContent() {
 
   if (!invitationId) {
     return (
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
+      <div className="bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-foreground mb-2 text-xl font-bold">لینک دعوت نامعتبر است</h1>
           <p className="text-muted-foreground">لطفاً از لینک ارسال شده در ایمیل خود استفاده کنید.</p>
@@ -30,9 +30,7 @@ function AcceptInvitationContent() {
 export default function AcceptInvitationPage() {
   return (
     <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center p-4">در حال بارگذاری...</div>
-      }
+      fallback={<div className="flex items-center justify-center p-4">در حال بارگذاری...</div>}
     >
       <AcceptInvitationContent />
     </Suspense>

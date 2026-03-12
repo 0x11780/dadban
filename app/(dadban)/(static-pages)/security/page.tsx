@@ -5,7 +5,7 @@ import { ShieldCheck, EyeOff, Lock } from "lucide-react";
 
 export default function SecurityPage() {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
+    <div className="bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <div className="bg-accent/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">

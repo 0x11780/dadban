@@ -72,7 +72,7 @@ export function RequestDetailScreen() {
 
   if (loading) {
     return (
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
+      <div className="bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">در حال بارگذاری...</p>
@@ -84,7 +84,7 @@ export function RequestDetailScreen() {
 
   if (error || !request) {
     return (
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
+      <div className="bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardContent className="space-y-4 py-8">
             <p className="text-destructive text-center">{error || "درخواست یافت نشد"}</p>
@@ -101,7 +101,7 @@ export function RequestDetailScreen() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
+    <div className="bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-foreground text-xl font-bold">جزئیات درخواست</CardTitle>
