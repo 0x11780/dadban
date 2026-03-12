@@ -22,6 +22,23 @@ import {
 import { ReportWizardProgress } from "@/components/report-wizard-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Person } from "@/types";
 
 export function ReportPersonScreen() {
@@ -39,6 +56,8 @@ export function ReportPersonScreen() {
     state.currentReport?.involvedPerson || state.currentReport?.person || null,
   );
   const [showAddNew, setShowAddNew] = useState(false);
+  const [showSimilarWarning, setShowSimilarWarning] = useState(false);
+  const [pendingAdd, setPendingAdd] = useState(false);
   const [newPersonFirstName, setNewPersonFirstName] = useState("");
   const [newPersonLastName, setNewPersonLastName] = useState("");
   const [famousPeople, setFamousPeople] = useState<Person[]>([]);
@@ -81,7 +100,7 @@ export function ReportPersonScreen() {
     }
   };
 
-  const handleAddNewPerson = async () => {
+  const performAddPerson = async () => {
     if (!newPersonFirstName || !newPersonLastName) return;
     try {
       const { data, error } = await api.people.post({
@@ -93,10 +112,36 @@ export function ReportPersonScreen() {
         const newPerson: Person = { ...data, isFamous: false };
         setSelectedPerson(newPerson);
         setShowAddNew(false);
+        setShowSimilarWarning(false);
+        setPendingAdd(false);
       }
     } catch {
       console.error("Failed to create person");
     }
+  };
+
+  const handleAddNewPerson = async () => {
+    if (!newPersonFirstName || !newPersonLastName) return;
+    const firstName = newPersonFirstName.trim();
+    const lastName = newPersonLastName.trim();
+    const similar = await getFamousPeople(firstName);
+    const hasSimilar = similar.some(
+      (p) =>
+        p.firstName.trim().toLowerCase() === firstName.toLowerCase() &&
+        p.lastName.trim().toLowerCase() === lastName.toLowerCase(),
+    );
+    if (hasSimilar) {
+      setPendingAdd(true);
+      setShowSimilarWarning(true);
+    } else {
+      await performAddPerson();
+    }
+  };
+
+  const handleConfirmAddDespiteSimilar = async () => {
+    setShowSimilarWarning(false);
+    await performAddPerson();
+    setPendingAdd(false);
   };
 
   return (
@@ -178,13 +223,6 @@ export function ReportPersonScreen() {
 
           {hasInvolvedPerson === "yes" && !showAddNew && (
             <>
-              <Alert variant="default" className="border-amber-200 bg-amber-50">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
-                  لطفاً از ذکر اطلاعات شخصی غیرضروری خودداری کنید.
-                </AlertDescription>
-              </Alert>
-
               <Label className="mb-2" htmlFor="search">
                 جستجو در افراد شناخته‌شده
               </Label>
@@ -260,52 +298,88 @@ export function ReportPersonScreen() {
             </>
           )}
 
-          {hasInvolvedPerson === "yes" && showAddNew && (
-            <div className="bg-muted/10 space-y-4 rounded-xl border p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">افزودن شخص جدید</h3>
+          <Dialog
+            open={showAddNew}
+            onOpenChange={(open) => {
+              setShowAddNew(open);
+              if (!open) {
+                setNewPersonFirstName("");
+                setNewPersonLastName("");
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>افزودن شخص جدید</DialogTitle>
+              </DialogHeader>
+              <Alert size="sm" variant="default" className="border-amber-200 bg-amber-50">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  لطفا ابتدا از موجود نبودن شخص در لیست افراد معروف مطمئن شوید.
+                </AlertDescription>
+              </Alert>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="modal-firstName">
+                    نام <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="modal-firstName"
+                    value={newPersonFirstName}
+                    onChange={(e) => setNewPersonFirstName(e.target.value)}
+                    placeholder="نام شخص..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="modal-lastName">
+                    نام خانوادگی <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="modal-lastName"
+                    value={newPersonLastName}
+                    onChange={(e) => setNewPersonLastName(e.target.value)}
+                    placeholder="نام خانوادگی شخص..."
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowAddNew(false)}>
+                  انصراف
+                </Button>
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAddNew(false)}
+                  onClick={handleAddNewPerson}
+                  disabled={!newPersonFirstName || !newPersonLastName}
                 >
-                  <X className="h-4 w-4" />
+                  <UserPlus className="ml-2 h-4 w-4" />
+                  افزودن شخص
                 </Button>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="firstName">
-                  نام <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="firstName"
-                  value={newPersonFirstName}
-                  onChange={(e) => setNewPersonFirstName(e.target.value)}
-                  placeholder="نام شخص..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">
-                  نام خانوادگی <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="lastName"
-                  value={newPersonLastName}
-                  onChange={(e) => setNewPersonLastName(e.target.value)}
-                  placeholder="نام خانوادگی شخص..."
-                />
-              </div>
-              <Button
-                type="button"
-                onClick={handleAddNewPerson}
-                disabled={!newPersonFirstName || !newPersonLastName}
-                className="w-full"
-              >
-                <UserPlus className="ml-2 h-4 w-4" />
-                افزودن شخص
-              </Button>
-            </div>
-          )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog open={showSimilarWarning} onOpenChange={setShowSimilarWarning}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>شخص مشابه موجود است</AlertDialogTitle>
+                <AlertDialogDescription>
+                  شخصی با مشخصات مشابه موجود است، آیا مطمئن هستید که شخص جدیدی باید اضافه شود؟
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel
+                  onClick={() => {
+                    setPendingAdd(false);
+                  }}
+                >
+                  انصراف
+                </AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmAddDespiteSimilar}>
+                  بله، اضافه کن
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" onClick={() => router.back()} className="flex-1">
