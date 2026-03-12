@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 import { api } from "@/lib/edyen";
+import { formatTimeAgo } from "@/lib/utils";
 import { DADBAN_INVITE_TOKEN_KEY } from "@/lib/edyen";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,17 +26,6 @@ type Transaction = {
   type: string;
   createdAt: string;
 };
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-}
 
 export function MyTokensScreen() {
   const router = useRouter();
@@ -131,7 +121,7 @@ export function MyTokensScreen() {
                           {tx.amount}
                         </Badge>
                         <span className="text-muted-foreground text-xs">
-                          {formatDate(tx.createdAt)}
+                          {formatTimeAgo(tx.createdAt)}
                         </span>
                       </div>
                     </li>

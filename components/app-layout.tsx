@@ -1,65 +1,139 @@
 "use client";
 
+import { useEffect } from "react";
 import { useApp } from "@/context/app-context";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Languages, House } from "lucide-react";
+import { Languages, House, UserCircle, Settings, Shield, HelpCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { Shield, HelpCircle } from "lucide-react";
 import { routes } from "@/lib/routes";
+import { api, DADBAN_INVITE_TOKEN_KEY } from "@/lib/edyen";
+
+const ChevronDown = () => (
+  <svg
+    className="h-4 w-4 shrink-0 opacity-50"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const { state, setLanguage } = useApp();
+  const { state, setLanguage, setUser } = useApp();
+  const user = state.user;
+
+  // بارگذاری کاربر هنگام وجود auth (invite token یا session cookie)
+  useEffect(() => {
+    if (user) return;
+    const hasAuth =
+      typeof window !== "undefined" &&
+      (localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) || document.cookie.includes("better-auth"));
+    if (!hasAuth) return;
+    let cancelled = false;
+    api.me.get().then(({ data, error }) => {
+      if (cancelled || error || !data) return;
+      setUser({
+        id: data.id,
+        passkey: "",
+        inviteCode: data.inviteCode ?? "",
+        isActivated: true,
+        tokensCount: data.tokensCount ?? 0,
+        approvedRequestsCount: data.approvedRequestsCount ?? 0,
+      } as Parameters<typeof setUser>[0]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, setUser]);
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
       {/* Header - visible on all pages */}
       <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
         <div className="container flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <Link href={routes.home} className="flex items-center gap-2">
             <Image src="/logo.png" alt="دادبان" width={36} height={36} className="h-9 w-9" />
             <span className="text-foreground text-lg font-bold">دادبان</span>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Languages className="h-4 w-4" />
-                {state.language === "fa" ? "فارسی" : "English"}
-                <svg
-                  className="h-4 w-4 shrink-0 opacity-50"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <UserCircle className="h-4 w-4" />
+                  پنل کاربری
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={routes.mainMenu} className="flex items-center gap-2">
+                    <UserCircle className="h-4 w-4" />
+                    پنل کاربری
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Settings className="h-4 w-4" />
+                    تنظیمات
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuCheckboxItem
+                      checked={state.language === "fa"}
+                      onCheckedChange={() => setLanguage("fa")}
+                    >
+                      فارسی
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      checked={state.language === "en"}
+                      onCheckedChange={() => setLanguage("en")}
+                    >
+                      English
+                    </DropdownMenuCheckboxItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Languages className="h-4 w-4" />
+                  {state.language === "fa" ? "فارسی" : "English"}
+                  <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom">
+                <DropdownMenuCheckboxItem
+                  checked={state.language === "fa"}
+                  onCheckedChange={() => setLanguage("fa")}
                 >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom">
-              <DropdownMenuCheckboxItem
-                checked={state.language === "fa"}
-                onCheckedChange={() => setLanguage("fa")}
-              >
-                فارسی
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={state.language === "en"}
-                onCheckedChange={() => setLanguage("en")}
-              >
-                English
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  فارسی
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={state.language === "en"}
+                  onCheckedChange={() => setLanguage("en")}
+                >
+                  English
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
 

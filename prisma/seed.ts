@@ -335,6 +335,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   tokens_deduct_false_report: "3",
   tokens_deduct_problematic_report: "1",
   tokens_reward_invited_activity: "2",
+  max_invite_codes_unused: "5",
 };
 
 async function seedSettings() {

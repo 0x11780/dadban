@@ -256,6 +256,17 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
         throw status(400, "برای دعوت شخصی ایمیل الزامی است");
       }
 
+      const maxUnused = await getSettingNumber(SETTING_KEYS.MAX_INVITE_CODES_UNUSED);
+      const unusedCount = await prisma.inviteCode.count({
+        where: { inviterId, usedById: null, isActive: true },
+      });
+      if (maxUnused > 0 && unusedCount >= maxUnused) {
+        throw status(
+          400,
+          `حداکثر ${maxUnused} کد دعوت استفاده‌نشده مجاز است. لطفاً از کدهای قبلی استفاده کنید یا منتظر بمانید تا کسی ثبت‌نام کند.`,
+        );
+      }
+
       const code = await ensureUniqueInviteCode();
       const invitedEmail = body.type === "personal" ? (body.email?.trim() ?? null) : null;
 
@@ -295,6 +306,42 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
       }),
     },
   )
+  .get("/my-codes", async ({ request, status }) => {
+    let inviterId: string | null = null;
+    const inviteUser = await resolveInviteToken(request.headers.get("Authorization"));
+    if (inviteUser) {
+      inviterId = inviteUser.userId;
+    } else {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (session?.user?.id) inviterId = session.user.id;
+    }
+    if (!inviterId) {
+      throw status(401, "لطفاً وارد شوید");
+    }
+
+    const codes = await prisma.inviteCode.findMany({
+      where: { inviterId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        code: true,
+        usedById: true,
+        invitedEmail: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+
+    return codes.map((c) => ({
+      id: c.id,
+      code: c.code,
+      used: !!c.usedById,
+      invitedEmail: c.invitedEmail,
+      isActive: c.isActive,
+      createdAt: c.createdAt.toISOString(),
+    }));
+  })
   .get(
     "/check-code",
     async ({ query }) => {

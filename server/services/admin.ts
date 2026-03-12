@@ -72,6 +72,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         tokens_deduct_false_report: t.Optional(t.Number()),
         tokens_deduct_problematic_report: t.Optional(t.Number()),
         tokens_reward_invited_activity: t.Optional(t.Number()),
+        max_invite_codes_unused: t.Optional(t.Number()),
       }),
     },
   )

@@ -7,6 +7,7 @@ export const routes = {
   passkeyRegister: "/auth/passkey/register",
   passkeyVerify: "/auth/passkey/verify",
   mainMenu: "/main-menu",
+  settings: "/settings",
   myTokens: "/my-tokens",
   reportCategory: "/report/category",
   reportBasicInfo: "/report/basic-info",

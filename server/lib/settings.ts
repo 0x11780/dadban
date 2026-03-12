@@ -14,6 +14,8 @@ export const SETTING_KEYS = {
   TOKENS_DEDUCT_PROBLEMATIC_REPORT: "tokens_deduct_problematic_report",
   /** Tokens rewarded when invited user submits first report (activity) */
   TOKENS_REWARD_INVITED_ACTIVITY: "tokens_reward_invited_activity",
+  /** Max unused invite codes per user */
+  MAX_INVITE_CODES_UNUSED: "max_invite_codes_unused",
 } as const;
 
 export const SETTING_DEFAULTS: Record<(typeof SETTING_KEYS)[keyof typeof SETTING_KEYS], string> = {
@@ -23,6 +25,7 @@ export const SETTING_DEFAULTS: Record<(typeof SETTING_KEYS)[keyof typeof SETTING
   [SETTING_KEYS.TOKENS_DEDUCT_FALSE_REPORT]: "3",
   [SETTING_KEYS.TOKENS_DEDUCT_PROBLEMATIC_REPORT]: "1",
   [SETTING_KEYS.TOKENS_REWARD_INVITED_ACTIVITY]: "2",
+  [SETTING_KEYS.MAX_INVITE_CODES_UNUSED]: "5",
 };
 
 export type SettingsMap = Record<string, string | number | boolean>;

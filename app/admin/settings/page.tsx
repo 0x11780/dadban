@@ -15,6 +15,7 @@ type SettingsData = {
   tokens_deduct_false_report: number;
   tokens_deduct_problematic_report: number;
   tokens_reward_invited_activity: number;
+  max_invite_codes_unused: number;
 };
 
 const LABELS: Record<keyof SettingsData, string> = {
@@ -24,6 +25,7 @@ const LABELS: Record<keyof SettingsData, string> = {
   tokens_deduct_false_report: "تعداد توکن کسر شده در صورت گزارش غلط",
   tokens_deduct_problematic_report: "تعداد توکن کسر شده در صورت گزارش مشکل‌دار",
   tokens_reward_invited_activity: "تعداد توکن هدیه در صورت فعالیت کاربر دعوت‌شده",
+  max_invite_codes_unused: "حداکثر کد دعوت مجاز (استفاده‌نشده)",
 };
 
 const defaults: SettingsData = {
@@ -33,6 +35,7 @@ const defaults: SettingsData = {
   tokens_deduct_false_report: 3,
   tokens_deduct_problematic_report: 1,
   tokens_reward_invited_activity: 2,
+  max_invite_codes_unused: 5,
 };
 
 export default function AdminSystemSettingsPage() {
@@ -58,6 +61,8 @@ export default function AdminSystemSettingsPage() {
         Number(raw.tokens_deduct_problematic_report) || defaults.tokens_deduct_problematic_report,
       tokens_reward_invited_activity:
         Number(raw.tokens_reward_invited_activity) || defaults.tokens_reward_invited_activity,
+      max_invite_codes_unused:
+        Number(raw.max_invite_codes_unused) ?? defaults.max_invite_codes_unused,
     });
   };
 
@@ -76,6 +81,7 @@ export default function AdminSystemSettingsPage() {
         tokens_deduct_false_report: settings.tokens_deduct_false_report,
         tokens_deduct_problematic_report: settings.tokens_deduct_problematic_report,
         tokens_reward_invited_activity: settings.tokens_reward_invited_activity,
+        max_invite_codes_unused: settings.max_invite_codes_unused,
       });
     } finally {
       setSaving(false);
@@ -209,6 +215,25 @@ export default function AdminSystemSettingsPage() {
                   }))
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="max_invite_codes_unused">{LABELS.max_invite_codes_unused}</Label>
+              <Input
+                id="max_invite_codes_unused"
+                type="number"
+                min={0}
+                value={settings.max_invite_codes_unused}
+                onChange={(e) =>
+                  setSettings((s) => ({
+                    ...s,
+                    max_invite_codes_unused: Math.max(0, Number.parseInt(e.target.value, 10) || 0),
+                  }))
+                }
+              />
+              <p className="text-muted-foreground text-xs">
+                ۰ = نامحدود. کاربر نمی‌تواند بیش از این تعداد کد دعوت استفاده‌نشده داشته باشد.
+              </p>
             </div>
 
             <Button type="submit" disabled={saving}>
