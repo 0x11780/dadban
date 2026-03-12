@@ -28,11 +28,8 @@ export function InviteUserScreen() {
       : { type: "public" as const };
     const { data, error: inviteError } = await api.invite["invite-user"].post(body);
 
-    if (inviteError) {
-      const errMsg =
-        typeof inviteError === "string"
-          ? inviteError
-          : (inviteError as { message?: string })?.message || "خطا در ارسال دعوت.";
+    if (inviteError?.value) {
+      const errMsg = inviteError?.value?.error?.message || "خطا در ارسال دعوت.";
       setError(errMsg);
       setIsLoading(false);
       return;
