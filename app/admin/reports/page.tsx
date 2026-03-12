@@ -18,8 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X } from "lucide-react";
 import Link from "next/link";
 
 type Report = {
@@ -53,8 +60,15 @@ export default function AdminReportsPage() {
     fetchReports();
   }, [page, status]);
 
-  const updateStatus = async (id: string, newStatus: string) => {
-    await api.admin.reports({ id }).put({ status: newStatus });
+  const updateStatus = async (
+    id: string,
+    newStatus: string,
+    rejectionReason?: "false" | "problematic",
+  ) => {
+    await api.admin.reports({ id }).put({
+      status: newStatus,
+      ...(newStatus === "rejected" && rejectionReason && { rejectionReason }),
+    });
     fetchReports();
   };
 

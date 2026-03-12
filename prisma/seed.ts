@@ -328,6 +328,26 @@ async function seedDemoToken() {
   console.log(`Demo invite token seeded. Token: ${DEMO_INVITE_TOKEN}, passkey: ${DEMO_PASSKEY}`);
 }
 
+const DEFAULT_SETTINGS: Record<string, string> = {
+  reports_enabled: "true",
+  default_tokens_new_user: "10",
+  tokens_reward_approved_report: "5",
+  tokens_deduct_false_report: "3",
+  tokens_deduct_problematic_report: "1",
+  tokens_reward_invited_activity: "2",
+};
+
+async function seedSettings() {
+  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+    await prisma.setting.upsert({
+      where: { key },
+      create: { key, value },
+      update: {},
+    });
+  }
+  console.log("Settings seeded.");
+}
+
 async function seedAdminPanel() {
   const existing = await prisma.adminPanelUser.findFirst();
   if (existing) {
@@ -350,6 +370,7 @@ async function seedAdminPanel() {
 
 async function main() {
   await seedUser();
+  await seedSettings();
   await seedInviteCodes();
   await seedDemoToken();
   await seedCategories();

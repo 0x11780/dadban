@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "../db";
+import { getAllSettings, setSettings, SETTING_KEYS, type SettingsMap } from "../lib/settings";
 import { createAuditLog } from "./audit";
 import { auth } from "@/lib/auth";
 import { getAdminPanelSession } from "./admin-panel-auth";
@@ -40,6 +41,40 @@ const adminGuard = new Elysia({ name: "adminGuard" }).derive(async ({ request })
 
 export const adminService = new Elysia({ prefix: "/admin", aot: false })
   .use(adminGuard)
+  // Settings
+  .get("/settings", async () => {
+    const data = await getAllSettings();
+    return { data };
+  })
+  .put(
+    "/settings",
+    async ({ body, request, ip, auth }) => {
+      const allowedKeys = new Set(Object.values(SETTING_KEYS));
+      const toSet: SettingsMap = {};
+      for (const [key, value] of Object.entries(body)) {
+        if (allowedKeys.has(key)) toSet[key] = value;
+      }
+      await setSettings(toSet);
+      await createAuditLog({
+        action: "update",
+        entity: "Setting",
+        entityId: "system",
+        details: JSON.stringify(toSet),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { data: await getAllSettings() };
+    },
+    {
+      body: t.Object({
+        reports_enabled: t.Optional(t.Boolean()),
+        default_tokens_new_user: t.Optional(t.Number()),
+        tokens_reward_approved_report: t.Optional(t.Number()),
+        tokens_deduct_false_report: t.Optional(t.Number()),
+        tokens_deduct_problematic_report: t.Optional(t.Number()),
+        tokens_reward_invited_activity: t.Optional(t.Number()),
+      }),
+    },
+  )
   // Categories
   .get("/categories", async ({ ip }) => {
     const data = await prisma.category.findMany({
@@ -455,30 +490,66 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
   .put(
     "/reports/:id",
     async ({ params, body, request, ip, auth }) => {
+      const existing = await prisma.report.findUnique({
+        where: { id: params.id },
+        include: { user: { select: { id: true, tokenBalance: true } } },
+      });
+      if (!existing) throw new Error("Not found");
+
+      const rejectionReason =
+        body.status === "rejected" ? (body.rejectionReason ?? "problematic") : null;
+
       const report = await prisma.report.update({
         where: { id: params.id },
         data: {
           ...(body.status != null && {
             status: body.status,
+            rejectionReason: rejectionReason ?? undefined,
             reviewedBy: auth.type === "user" ? auth.session.user.id : undefined,
             reviewedAt: new Date(),
           }),
         },
-        include: { person: true },
+        include: { person: true, user: { select: { id: true } } },
       });
+
+      if (body.status === "accepted" || body.status === "rejected") {
+        const { getSettingNumber, SETTING_KEYS } = await import("../lib/settings");
+        if (body.status === "accepted") {
+          const reward = await getSettingNumber(SETTING_KEYS.TOKENS_REWARD_APPROVED_REPORT);
+          await prisma.user.update({
+            where: { id: existing.userId },
+            data: { tokenBalance: { increment: reward } },
+          });
+        } else if (rejectionReason === "false" || rejectionReason === "problematic") {
+          const key =
+            rejectionReason === "false"
+              ? SETTING_KEYS.TOKENS_DEDUCT_FALSE_REPORT
+              : SETTING_KEYS.TOKENS_DEDUCT_PROBLEMATIC_REPORT;
+          const deduct = await getSettingNumber(key);
+          const newBalance = Math.max(0, (existing.user.tokenBalance ?? 0) - deduct);
+          await prisma.user.update({
+            where: { id: existing.userId },
+            data: { tokenBalance: newBalance },
+          });
+        }
+      }
+
       await createAuditLog({
         action:
           body.status === "accepted" ? "approve" : body.status === "rejected" ? "reject" : "update",
         entity: "Report",
         entityId: report.id,
-        details: JSON.stringify({ status: body.status }),
+        details: JSON.stringify({ status: body.status, rejectionReason }),
         ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return report;
     },
     {
       params: t.Object({ id: t.String() }),
-      body: t.Object({ status: t.Optional(t.String()) }),
+      body: t.Object({
+        status: t.Optional(t.String()),
+        rejectionReason: t.Optional(t.Union([t.Literal("false"), t.Literal("problematic")])),
+      }),
     },
   )
   // IP whitelist

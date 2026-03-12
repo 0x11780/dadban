@@ -34,12 +34,13 @@ export const meService = new Elysia({ prefix: "/me", aot: false })
     if (!session?.user?.id) {
       throw new Error("Unauthorized");
     }
-    const [tokensCount, approvedRequestsCount] = await Promise.all([
-      prisma.report.count({ where: { userId: session.user.id } }),
-      prisma.report.count({
-        where: { userId: session.user.id, status: "accepted" },
-      }),
-    ]);
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { tokenBalance: true },
+    });
+    const approvedRequestsCount = await prisma.report.count({
+      where: { userId: session.user.id, status: "accepted" },
+    });
     return {
       id: session.user.id,
       name: session.user.name,
@@ -48,7 +49,7 @@ export const meService = new Elysia({ prefix: "/me", aot: false })
       passkey: "",
       inviteCode: "",
       isActivated: true,
-      tokensCount,
+      tokensCount: user?.tokenBalance ?? 0,
       approvedRequestsCount,
     };
   });

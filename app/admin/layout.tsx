@@ -16,6 +16,7 @@ import {
   MapPin,
   Building2,
   Landmark,
+  Settings,
 } from "lucide-react";
 import { AdminAuthGuard } from "@/components/admin-auth-guard";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ const regionsSubItems = [
 ];
 
 const settingsSubItems = [
+  { href: "/admin/settings", label: "تنظیمات سیستم", icon: Settings },
   { href: "/admin/ip-whitelist", label: "IP های مجاز", icon: Globe },
   { href: "/admin/panel-users", label: "کاربران پنل", icon: UserCog },
 ];

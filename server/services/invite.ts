@@ -1,6 +1,7 @@
-import { Elysia, t } from "elysia";
+import { Elysia, t, error } from "elysia";
 import { prisma } from "../db";
 import { auth } from "@/lib/auth";
+import { resolveInviteToken } from "../lib/auth-invite";
 import { randomBytes } from "node:crypto";
 
 const TOKEN_EXPIRY_DAYS = 365;
@@ -22,6 +23,9 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
       });
       if (!inviteCode) {
         return { ok: false, error: "کد دعوت نامعتبر است" };
+      }
+      if (inviteCode.usedById) {
+        return { ok: false, error: "این کد دعوت قبلاً استفاده شده است" };
       }
 
       const expiresAt = new Date();
@@ -202,4 +206,45 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
         approvedRequestsCount,
       },
     };
-  });
+  })
+  .post(
+    "/invite-user",
+    async ({ body, request }) => {
+      const inviteUser = await resolveInviteToken(request.headers.get("Authorization"));
+      if (!inviteUser) {
+        throw error(401, "لطفاً وارد شوید");
+      }
+      if (body.type === "personal" && !body.email?.trim()) {
+        throw error(400, "برای دعوت شخصی ایمیل الزامی است");
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const invite = await prisma.appInvitation.create({
+        data: {
+          inviterId: inviteUser.userId,
+          email: body.type === "personal" ? body.email : null,
+          name: body.type === "personal" && body.name ? body.name : null,
+          status: "pending",
+          expiresAt,
+        },
+      });
+
+      const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+      const inviteLink = `${baseURL}/accept-invitation?invitationId=${invite.id}`;
+
+      return {
+        ok: true,
+        id: invite.id,
+        inviteLink,
+      };
+    },
+    {
+      body: t.Object({
+        type: t.Union([t.Literal("personal"), t.Literal("public")]),
+        email: t.Optional(t.String()),
+        name: t.Optional(t.String()),
+      }),
+    },
+  );

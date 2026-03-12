@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { api } from "@/lib/edyen";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,10 +26,19 @@ export function InviteUserScreen() {
     const body = trimmedEmail
       ? { type: "personal" as const, email: trimmedEmail }
       : { type: "public" as const };
-    const { data, error: inviteError } = await authClient.inviteUser(body);
+    const { data, error: inviteError } = await api.invite["invite-user"].post(body);
 
     if (inviteError) {
-      setError(inviteError.message || "خطا در ارسال دعوت.");
+      const errMsg =
+        typeof inviteError === "string"
+          ? inviteError
+          : (inviteError as { message?: string })?.message || "خطا در ارسال دعوت.";
+      setError(errMsg);
+      setIsLoading(false);
+      return;
+    }
+    if (data && !(data as { ok?: boolean }).ok) {
+      setError((data as { error?: string })?.error || "خطا در ارسال دعوت.");
       setIsLoading(false);
       return;
     }
@@ -48,17 +57,29 @@ export function InviteUserScreen() {
     setSuccess("");
     setIsLoading(true);
 
-    const { data, error: inviteError } = await authClient.inviteUser({ type: "public" });
+    const { data, error: inviteError } = await api.invite["invite-user"].post({ type: "public" });
 
     if (inviteError) {
-      setError(inviteError.message || "خطا در ایجاد دعوت عمومی.");
+      const errMsg =
+        typeof inviteError === "string"
+          ? inviteError
+          : (inviteError as { message?: string })?.message || "خطا در ایجاد دعوت عمومی.";
+      setError(errMsg);
+      setIsLoading(false);
+      return;
+    }
+    const res = data as { ok?: boolean; id?: string; inviteLink?: string } | null;
+    if (res && !res.ok) {
+      setError((res as { error?: string })?.error || "خطا در ایجاد دعوت عمومی.");
       setIsLoading(false);
       return;
     }
 
-    const inviteLink = data?.id
-      ? `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invitation?invitationId=${data.id}`
-      : "";
+    const inviteLink =
+      res?.inviteLink ??
+      (res?.id
+        ? `${typeof window !== "undefined" ? window.location.origin : ""}/accept-invitation?invitationId=${res.id}`
+        : "");
     setSuccess(`لینک دعوت عمومی: ${inviteLink}`);
     setIsLoading(false);
   };

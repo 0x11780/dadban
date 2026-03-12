@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { createAuditLog } from "./audit";
 import { auth } from "@/lib/auth";
 import { resolveInviteToken } from "../lib/auth-invite";
+import { getSettingBool, getSettingNumber, SETTING_KEYS } from "../lib/settings";
 
 async function getSession(headers: Headers) {
   return auth.api.getSession({ headers });
@@ -37,6 +38,11 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
       if (!session?.user?.id) {
         throw new Error("Unauthorized");
       }
+      const reportsEnabled = await getSettingBool(SETTING_KEYS.REPORTS_ENABLED);
+      if (!reportsEnabled) {
+        throw new Error("در حال حاضر امکان ثبت گزارش جدید وجود ندارد");
+      }
+      const reportCountBefore = await prisma.report.count({ where: { userId: session.user.id } });
       const report = await prisma.report.create({
         data: {
           userId: session.user.id,
@@ -78,6 +84,16 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         ipAddress: ip?.address,
         userAgent: request.headers.get("user-agent") ?? undefined,
       });
+      const isInviteUser =
+        reportCountBefore === 0 &&
+        (await prisma.inviteSession.findFirst({ where: { userId: session.user.id } }));
+      if (isInviteUser) {
+        const reward = await getSettingNumber(SETTING_KEYS.TOKENS_REWARD_INVITED_ACTIVITY);
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { tokenBalance: { increment: reward } },
+        });
+      }
       return report;
     },
     {

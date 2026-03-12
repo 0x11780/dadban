@@ -1,7 +1,12 @@
-import { Elysia, t } from "elysia";
+import { Elysia } from "elysia";
 import { prisma } from "../db";
+import { getSettingBool, SETTING_KEYS } from "../lib/settings";
 
 export const constantsService = new Elysia({ prefix: "/constants", aot: false })
+  .get("/reports-enabled", async () => {
+    const enabled = await getSettingBool(SETTING_KEYS.REPORTS_ENABLED);
+    return { enabled };
+  })
   .get("/categories", async () => {
     const categories = await prisma.category.findMany({
       where: { isActive: true, parentId: null },
