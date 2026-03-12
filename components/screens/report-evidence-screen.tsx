@@ -214,7 +214,6 @@ export function ReportEvidenceScreen() {
                   onChange={(e) => setEvidenceDescription(e.target.value)}
                   placeholder="توضیحات بیشتر درباره مدارک..."
                   rows={3}
-                  dir="rtl"
                 />
               </div>
             </>

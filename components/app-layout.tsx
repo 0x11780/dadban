@@ -45,7 +45,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </svg>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="bottom">
+            <DropdownMenuContent side="bottom">
               <DropdownMenuCheckboxItem
                 checked={state.language === "fa"}
                 onCheckedChange={() => setLanguage("fa")}

@@ -75,12 +75,12 @@ export function ReportLocationScreen() {
                 setCityId("");
               }}
             >
-              <SelectTrigger id="province" className="w-full text-right">
+              <SelectTrigger id="province" className="w-full">
                 <SelectValue placeholder="انتخاب استان..." />
               </SelectTrigger>
-              <SelectContent align="end" className="max-h-60 text-right">
+              <SelectContent className="max-h-60">
                 {provinces.map((p) => (
-                  <SelectItem key={p.id} value={p.id} className="justify-end">
+                  <SelectItem key={p.id} value={p.id}>
                     {p.name}
                   </SelectItem>
                 ))}
@@ -92,12 +92,12 @@ export function ReportLocationScreen() {
             <div className="space-y-2">
               <Label htmlFor="city">شهر (اختیاری)</Label>
               <Select value={cityId} onValueChange={setCityId}>
-                <SelectTrigger id="city" className="w-full text-right">
+                <SelectTrigger id="city" className="w-full">
                   <SelectValue placeholder="انتخاب شهر..." />
                 </SelectTrigger>
-                <SelectContent align="end" className="text-right">
+                <SelectContent>
                   {cities.map((c) => (
-                    <SelectItem key={c.id} value={c.name} className="justify-end">
+                    <SelectItem key={c.id} value={c.name}>
                       {c.name}
                     </SelectItem>
                   ))}
@@ -113,7 +113,6 @@ export function ReportLocationScreen() {
               value={exactLocation}
               onChange={(e) => setExactLocation(e.target.value)}
               placeholder="مثال: ساختمان مرکزی، طبقه سوم"
-              dir="rtl"
             />
           </div>
 

@@ -76,12 +76,12 @@ export function ReportCategoryScreen() {
                 setSubcategoryId("");
               }}
             >
-              <SelectTrigger id="category" className="w-full text-right">
+              <SelectTrigger id="category" className="w-full">
                 <SelectValue placeholder="انتخاب دسته‌بندی..." />
               </SelectTrigger>
-              <SelectContent align="end" className="text-right">
+              <SelectContent>
                 {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id} className="justify-end">
+                  <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
                   </SelectItem>
                 ))}
@@ -95,12 +95,12 @@ export function ReportCategoryScreen() {
                 زیردسته <span className="text-destructive">*</span>
               </Label>
               <Select value={subcategoryId} onValueChange={setSubcategoryId}>
-                <SelectTrigger id="subcategory" className="w-full text-right">
+                <SelectTrigger id="subcategory" className="w-full">
                   <SelectValue placeholder="انتخاب زیردسته..." />
                 </SelectTrigger>
-                <SelectContent align="end" className="text-right">
+                <SelectContent>
                   {selectedCategory.children.map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id} className="justify-end">
+                    <SelectItem key={sub.id} value={sub.id}>
                       {sub.name}
                     </SelectItem>
                   ))}

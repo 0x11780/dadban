@@ -65,7 +65,7 @@ export function MyRequestsScreen() {
                     <div className="bg-primary/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full">
                       <FileText className="text-primary h-5 w-5" />
                     </div>
-                    <div className="text-right">
+                    <div className="text-start">
                       <div className="font-medium">
                         {request.person.firstName} {request.person.lastName}
                       </div>

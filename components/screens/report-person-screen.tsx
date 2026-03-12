@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ReportWizardProgress } from "@/components/report-wizard-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Person } from "@/types";
 
 export function ReportPersonScreen() {
@@ -184,45 +185,58 @@ export function ReportPersonScreen() {
                 </AlertDescription>
               </Alert>
 
-              <div className="space-y-2">
-                <Label htmlFor="search">جستجو در افراد شناخته‌شده</Label>
-                <div className="relative">
-                  <Search className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    id="search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="نام شخص را جستجو کنید..."
-                    className="pr-10"
-                    dir="rtl"
-                  />
-                </div>
-              </div>
+              <Label className="mb-2" htmlFor="search">
+                جستجو در افراد شناخته‌شده
+              </Label>
+              <div className="bg-muted-foreground/2 rounded-lg border p-3">
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      id="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="نام شخص را جستجو کنید..."
+                      className="pr-10"
+                    />
+                  </div>
 
-              <div className="max-h-40 space-y-2 overflow-y-auto">
-                {loading ? (
-                  <p className="text-muted-foreground py-4 text-center">در حال بارگذاری...</p>
-                ) : (
-                  filteredPeople.map((person) => (
-                    <button
-                      key={person.id}
-                      type="button"
-                      onClick={() => setSelectedPerson(person)}
-                      className={`w-full rounded-lg border p-3 text-right transition-colors ${
-                        selectedPerson?.id === person.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:bg-muted"
-                      }`}
-                    >
-                      <span className="font-medium">
-                        {person.firstName} {person.lastName}
-                      </span>
-                    </button>
-                  ))
-                )}
-                {!loading && filteredPeople.length === 0 && searchQuery && (
-                  <p className="text-muted-foreground py-4 text-center">شخصی با این نام یافت نشد</p>
-                )}
+                  <div className="max-h-40 space-y-2 overflow-y-auto">
+                    {loading ? (
+                      <p className="text-muted-foreground py-4 text-center">در حال بارگذاری...</p>
+                    ) : (
+                      filteredPeople.map((person) => (
+                        <button
+                          key={person.id}
+                          type="button"
+                          onClick={() => setSelectedPerson(person)}
+                          className={`bg-card flex w-full items-center gap-3 rounded-lg border p-2 text-start text-sm transition-colors ${
+                            selectedPerson?.id === person.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:bg-muted"
+                          }`}
+                        >
+                          <Avatar className="size-8 shrink-0">
+                            {person.imageUrl ? (
+                              <AvatarImage src={person.imageUrl} alt={person.firstName} />
+                            ) : null}
+                            <AvatarFallback className="text-xs font-medium">
+                              {person.firstName?.[0] ?? ""} {person.lastName?.[0] ?? ""}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">
+                            {person.firstName} {person.lastName}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                    {!loading && filteredPeople.length === 0 && searchQuery && (
+                      <p className="text-muted-foreground py-4 text-center">
+                        شخصی با این نام یافت نشد
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <Button
@@ -247,7 +261,7 @@ export function ReportPersonScreen() {
           )}
 
           {hasInvolvedPerson === "yes" && showAddNew && (
-            <div className="bg-muted/30 space-y-4 rounded-xl border p-4">
+            <div className="bg-muted/10 space-y-4 rounded-xl border p-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">افزودن شخص جدید</h3>
                 <Button
@@ -268,7 +282,6 @@ export function ReportPersonScreen() {
                   value={newPersonFirstName}
                   onChange={(e) => setNewPersonFirstName(e.target.value)}
                   placeholder="نام شخص..."
-                  dir="rtl"
                 />
               </div>
               <div className="space-y-2">
@@ -280,7 +293,6 @@ export function ReportPersonScreen() {
                   value={newPersonLastName}
                   onChange={(e) => setNewPersonLastName(e.target.value)}
                   placeholder="نام خانوادگی شخص..."
-                  dir="rtl"
                 />
               </div>
               <Button

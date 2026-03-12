@@ -60,12 +60,12 @@ export function ReportOrganizationScreen() {
               value={organizationType}
               onValueChange={(v) => setOrganizationType(v as OrganizationType)}
             >
-              <SelectTrigger id="org-type" className="w-full text-right">
+              <SelectTrigger id="org-type" className="w-full">
                 <SelectValue placeholder="انتخاب نوع نهاد..." />
               </SelectTrigger>
-              <SelectContent align="end" className="text-right">
+              <SelectContent>
                 {ORGANIZATION_TYPES.map((org) => (
-                  <SelectItem key={org.value} value={org.value} className="justify-end">
+                  <SelectItem key={org.value} value={org.value}>
                     {org.label}
                   </SelectItem>
                 ))}
@@ -82,7 +82,6 @@ export function ReportOrganizationScreen() {
               value={organizationName}
               onChange={(e) => setOrganizationName(e.target.value)}
               placeholder="مثال: شهرداری منطقه ۵ تهران"
-              dir="rtl"
             />
           </div>
 

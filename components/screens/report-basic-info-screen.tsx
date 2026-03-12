@@ -60,7 +60,6 @@ export function ReportBasicInfoScreen() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="مثال: درخواست رشوه برای صدور مجوز کسب‌وکار در تهران"
               maxLength={120}
-              dir="rtl"
             />
 
             <div className="text-muted-foreground flex justify-between text-xs">
@@ -93,7 +92,6 @@ export function ReportBasicInfoScreen() {
 - پیامد یا نتیجه این اتفاق چه بوده است"
               rows={8}
               maxLength={10000}
-              dir="rtl"
               className="min-h-32 resize-none"
             />
             <div className="text-muted-foreground flex justify-between text-xs">
