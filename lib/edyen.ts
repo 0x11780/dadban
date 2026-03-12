@@ -6,4 +6,6 @@ const getBaseUrl = () =>
     ? window.location.origin
     : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-export const api = treaty<App>(getBaseUrl()).api;
+export const api = treaty<App>(getBaseUrl(), {
+  fetch: { credentials: "include" },
+}).api;

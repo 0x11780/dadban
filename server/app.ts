@@ -4,6 +4,7 @@ import { meService } from "./services/me";
 import { reportsService } from "./services/reports";
 import { peopleService } from "./services/people";
 import { adminService } from "./services/admin";
+import { adminPanelAuthService } from "./services/admin-panel-auth";
 import { DefaultContext, type Generator, rateLimit } from "elysia-rate-limit";
 import { elysiaHelmet } from "elysiajs-helmet";
 import { ip } from "elysia-ip";
@@ -89,6 +90,7 @@ export const app = new Elysia({ prefix: "/api", aot: false })
   .use(meService)
   .use(peopleService)
   .use(reportsService)
+  .use(adminPanelAuthService)
   .use(adminService)
   .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))
 

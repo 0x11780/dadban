@@ -17,6 +17,7 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  role          String    @default("user") // "user" | "validator"
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -244,4 +245,38 @@ model InviteCode {
   createdAt DateTime @default(now())
 
   @@map("invite_code")
+}
+
+// Admin panel - separate auth (IP whitelist + username/password)
+model AdminPanelUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions AdminPanelSession[]
+
+  @@map("admin_panel_user")
+}
+
+model AdminPanelIpWhitelist {
+  id        String   @id @default(cuid())
+  ipAddress String   // exact IP or CIDR (e.g. 192.168.1.0/24)
+  createdAt DateTime @default(now())
+
+  @@map("admin_panel_ip_whitelist")
+}
+
+model AdminPanelSession {
+  id               String   @id @default(cuid())
+  adminPanelUserId String
+  token            String   @unique
+  expiresAt        DateTime
+  ipAddress        String?
+  createdAt        DateTime @default(now())
+
+  adminPanelUser AdminPanelUser @relation(fields: [adminPanelUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminPanelUserId])
+  @@map("admin_panel_session")
 }

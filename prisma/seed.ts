@@ -272,6 +272,26 @@ async function seedFamousPeople() {
   console.log("Famous people seeded.");
 }
 
+async function seedAdminPanel() {
+  const existing = await prisma.adminPanelUser.findFirst();
+  if (existing) {
+    console.log("Admin panel user already exists, skipping.");
+    return;
+  }
+  const { hashPassword } = await import("better-auth/crypto");
+  const panelPassword = process.env.ADMIN_PANEL_PASSWORD || "AdminPanel123!";
+  const panelUser = await prisma.adminPanelUser.create({
+    data: {
+      username: "admin",
+      passwordHash: await hashPassword(panelPassword),
+    },
+  });
+  await prisma.adminPanelIpWhitelist.createMany({
+    data: [{ ipAddress: "127.0.0.1" }, { ipAddress: "::1" }, { ipAddress: "::ffff:127.0.0.1" }],
+  });
+  console.log("Admin panel seeded. Username: admin, add your IP to whitelist for access.");
+}
+
 async function main() {
   await seedUser();
   await seedInviteCodes();
@@ -279,6 +299,7 @@ async function main() {
   await seedProvincesAndCities();
   await seedUnknownPerson();
   await seedFamousPeople();
+  await seedAdminPanel();
   console.log("Seed completed.");
 }
 

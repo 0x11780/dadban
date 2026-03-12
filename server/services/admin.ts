@@ -2,19 +2,40 @@ import { Elysia, t } from "elysia";
 import { prisma } from "../db";
 import { createAuditLog } from "./audit";
 import { auth } from "@/lib/auth";
+import { getAdminPanelSession } from "./admin-panel-auth";
 
 async function getSession(headers: Headers) {
   return auth.api.getSession({ headers });
 }
 
+export type AdminAuth =
+  | {
+      type: "user";
+      session: NonNullable<Awaited<ReturnType<typeof getSession>>>;
+      admin: { id: string };
+    }
+  | { type: "panel"; adminPanelUser: { id: string; username: string } };
+
+function getAuditCtx(
+  auth: AdminAuth,
+  ctx: { ip?: { address?: string }; userAgent?: string },
+): { userId?: string; ipAddress?: string; userAgent?: string } {
+  return {
+    userId: auth.type === "user" ? auth.session.user.id : undefined,
+    ipAddress: ctx.ip?.address,
+    userAgent: ctx.userAgent,
+  };
+}
+
 const adminGuard = new Elysia({ name: "adminGuard" }).derive(async ({ request }) => {
   const session = await getSession(request.headers);
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  const admin = await prisma.admin.findUnique({
-    where: { userId: session.user.id },
-  });
-  if (!admin) throw new Error("Forbidden: Admin only");
-  return { session, admin };
+  if (session?.user?.id) {
+    const admin = await prisma.admin.findUnique({ where: { userId: session.user.id } });
+    if (admin) return { auth: { type: "user", session, admin } };
+  }
+  const panel = await getAdminPanelSession(request);
+  if (panel) return { auth: { type: "panel" as const, adminPanelUser: panel.adminPanelUser } };
+  throw new Error("Unauthorized");
 });
 
 export const adminService = new Elysia({ prefix: "/admin", aot: false })
@@ -28,15 +49,16 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
   })
   .post(
     "/categories",
-    async ({ body, request, ip, session }) => {
+    async ({ body, request, ip, auth }) => {
       const cat = await prisma.category.create({
         data: {
           name: body.name,
           slug: body.slug,
           description: body.description,
-          type: body.type ?? "general",
+          type: body.type ?? "report",
           sortOrder: body.sortOrder ?? 0,
           isActive: body.isActive ?? true,
+          parentId: body.parentId,
         },
       });
       await createAuditLog({
@@ -44,11 +66,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         entity: "Category",
         entityId: cat.id,
         details: JSON.stringify({ name: cat.name, slug: cat.slug }),
-        ctx: {
-          userId: session.user.id,
-          ipAddress: ip?.address,
-          userAgent: request.headers.get("user-agent") ?? undefined,
-        },
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return cat;
     },
@@ -60,12 +78,13 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         type: t.Optional(t.String()),
         sortOrder: t.Optional(t.Number()),
         isActive: t.Optional(t.Boolean()),
+        parentId: t.Optional(t.String()),
       }),
     },
   )
   .put(
     "/categories/:id",
-    async ({ params, body, request, ip, session }) => {
+    async ({ params, body, request, ip, auth }) => {
       const cat = await prisma.category.update({
         where: { id: params.id },
         data: {
@@ -75,6 +94,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
           ...(body.type != null && { type: body.type }),
           ...(body.sortOrder != null && { sortOrder: body.sortOrder }),
           ...(body.isActive != null && { isActive: body.isActive }),
+          ...(body.parentId != null && { parentId: body.parentId }),
         },
       });
       await createAuditLog({
@@ -82,11 +102,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         entity: "Category",
         entityId: cat.id,
         details: JSON.stringify(body),
-        ctx: {
-          userId: session.user.id,
-          ipAddress: ip?.address,
-          userAgent: request.headers.get("user-agent") ?? undefined,
-        },
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return cat;
     },
@@ -99,22 +115,19 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         type: t.Optional(t.String()),
         sortOrder: t.Optional(t.Number()),
         isActive: t.Optional(t.Boolean()),
+        parentId: t.Optional(t.Nullable(t.String())),
       }),
     },
   )
   .delete(
     "/categories/:id",
-    async ({ params, request, ip, session }) => {
+    async ({ params, request, ip, auth }) => {
       await prisma.category.delete({ where: { id: params.id } });
       await createAuditLog({
         action: "delete",
         entity: "Category",
         entityId: params.id,
-        ctx: {
-          userId: session.user.id,
-          ipAddress: ip?.address,
-          userAgent: request.headers.get("user-agent") ?? undefined,
-        },
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return { success: true };
     },
@@ -127,6 +140,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
         _count: { select: { reports: true } },
       },
@@ -134,6 +148,27 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
     });
     return { data };
   })
+  .put(
+    "/users/:id/role",
+    async ({ params, body, request, ip, auth }) => {
+      const user = await prisma.user.update({
+        where: { id: params.id },
+        data: { role: body.role },
+      });
+      await createAuditLog({
+        action: "update",
+        entity: "User",
+        entityId: user.id,
+        details: JSON.stringify({ role: body.role }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return user;
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({ role: t.Union([t.Literal("user"), t.Literal("validator")]) }),
+    },
+  )
   // People
   .get("/people", async ({ query }) => {
     const where: Record<string, unknown> = {};
@@ -153,13 +188,14 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
   })
   .post(
     "/people",
-    async ({ body, request, ip, session }) => {
+    async ({ body, request, ip, auth }) => {
       const person = await prisma.person.create({
         data: {
           firstName: body.firstName,
           lastName: body.lastName,
           nationalCode: body.nationalCode,
           imageUrl: body.imageUrl,
+          title: body.title,
           isFamous: body.isFamous ?? false,
         },
       });
@@ -168,11 +204,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         entity: "Person",
         entityId: person.id,
         details: JSON.stringify({ firstName: person.firstName, lastName: person.lastName }),
-        ctx: {
-          userId: session.user.id,
-          ipAddress: ip?.address,
-          userAgent: request.headers.get("user-agent") ?? undefined,
-        },
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return person;
     },
@@ -182,13 +214,14 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         lastName: t.String(),
         nationalCode: t.Optional(t.String()),
         imageUrl: t.Optional(t.String()),
+        title: t.Optional(t.String()),
         isFamous: t.Optional(t.Boolean()),
       }),
     },
   )
   .put(
     "/people/:id",
-    async ({ params, body, request, ip, session }) => {
+    async ({ params, body, request, ip, auth }) => {
       const person = await prisma.person.update({
         where: { id: params.id },
         data: {
@@ -196,6 +229,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
           ...(body.lastName != null && { lastName: body.lastName }),
           ...(body.nationalCode != null && { nationalCode: body.nationalCode }),
           ...(body.imageUrl != null && { imageUrl: body.imageUrl }),
+          ...(body.title != null && { title: body.title }),
           ...(body.isFamous != null && { isFamous: body.isFamous }),
         },
       });
@@ -204,11 +238,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         entity: "Person",
         entityId: person.id,
         details: JSON.stringify(body),
-        ctx: {
-          userId: session.user.id,
-          ipAddress: ip?.address,
-          userAgent: request.headers.get("user-agent") ?? undefined,
-        },
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
       });
       return person;
     },
@@ -219,11 +249,44 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         lastName: t.Optional(t.String()),
         nationalCode: t.Optional(t.String()),
         imageUrl: t.Optional(t.String()),
+        title: t.Optional(t.String()),
         isFamous: t.Optional(t.Boolean()),
       }),
     },
   )
+  .delete(
+    "/people/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.person.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "Person",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
   // Reports
+  .get(
+    "/reports/:id",
+    async ({ params }) => {
+      const report = await prisma.report.findUnique({
+        where: { id: params.id },
+        include: {
+          person: true,
+          user: { select: { id: true, name: true, email: true } },
+          category: true,
+          subcategory: true,
+          documents: true,
+        },
+      });
+      if (!report) throw new Error("Not found");
+      return report;
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
   .get("/reports", async ({ query }) => {
     const where: Record<string, unknown> = {};
     if (query.status?.trim()) where.status = query.status;
@@ -242,6 +305,359 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
     ]);
     return { data, total, page, perPage };
   })
+  .put(
+    "/reports/:id",
+    async ({ params, body, request, ip, auth }) => {
+      const report = await prisma.report.update({
+        where: { id: params.id },
+        data: {
+          ...(body.status != null && {
+            status: body.status,
+            reviewedBy: auth.type === "user" ? auth.session.user.id : undefined,
+            reviewedAt: new Date(),
+          }),
+        },
+        include: { person: true },
+      });
+      await createAuditLog({
+        action:
+          body.status === "accepted" ? "approve" : body.status === "rejected" ? "reject" : "update",
+        entity: "Report",
+        entityId: report.id,
+        details: JSON.stringify({ status: body.status }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return report;
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({ status: t.Optional(t.String()) }),
+    },
+  )
+  // IP whitelist
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: body.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  // Invitations
+  .post(
+    "/invitations",
+    async ({ body, request, ip, auth }) => {
+      const firstAdmin = await prisma.admin.findFirst();
+      const inviterId = firstAdmin?.userId;
+      if (!inviterId) throw new Error("No admin user found to create invitations");
+      const invite = await prisma.appInvitation.create({
+        data: {
+          inviterId,
+          email: body.email,
+          name: body.name,
+          status: "pending",
+          expiresAt: body.expiresInDays
+            ? new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000)
+            : undefined,
+        },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AppInvitation",
+        entityId: invite.id,
+        details: JSON.stringify({ email: invite.email }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+      return {
+        ...invite,
+        inviteLink: `${baseURL}/accept-invitation?invitationId=${invite.id}`,
+      };
+    },
+    {
+      body: t.Object({
+        email: t.Optional(t.String()),
+        name: t.Optional(t.String()),
+        expiresInDays: t.Optional(t.Number()),
+      }),
+    },
+  )
+  // Admin panel users
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: row.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  // Panel users
+  .get("/panel-users", async () => {
+    const data = await prisma.adminPanelUser.findMany({
+      select: { id: true, username: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/panel-users",
+    async ({ body, request, ip, auth }) => {
+      const { auth: authLib } = await import("@/lib/auth");
+      const ctx = await authLib.$context;
+      const passwordHash = await ctx.password.hash(body.password);
+      const user = await prisma.adminPanelUser.create({
+        data: { username: body.username, passwordHash },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelUser",
+        entityId: user.id,
+        details: JSON.stringify({ username: user.username }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { id: user.id, username: user.username, createdAt: user.createdAt };
+    },
+    {
+      body: t.Object({
+        username: t.String(),
+        password: t.String({ minLength: 8 }),
+      }),
+    },
+  )
+  // IP whitelist
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({ orderBy: { createdAt: "desc" } });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: row.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  // IP whitelist (admin panel access)
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: row.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  // Admin panel - IP whitelist
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: row.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  // Admin panel users
+  .get("/panel-users", async () => {
+    const data = await prisma.adminPanelUser.findMany({
+      select: { id: true, username: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return { data };
+  })
+  .post(
+    "/panel-users",
+    async ({ body, request, ip, auth }) => {
+      const { auth: authLib } = await import("@/lib/auth");
+      const ctx = await authLib.$context;
+      const passwordHash = await ctx.password.hash(body.password);
+      const user = await prisma.adminPanelUser.create({
+        data: { username: body.username, passwordHash },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelUser",
+        entityId: user.id,
+        details: JSON.stringify({ username: user.username }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { id: user.id, username: user.username, createdAt: user.createdAt };
+    },
+    { body: t.Object({ username: t.String(), password: t.String() }) },
+  )
+  // IP whitelist (admin panel)
+  .get("/ip-whitelist", async () => {
+    const data = await prisma.adminPanelIpWhitelist.findMany({ orderBy: { createdAt: "desc" } });
+    return { data };
+  })
+  .post(
+    "/ip-whitelist",
+    async ({ body, request, ip, auth }) => {
+      const row = await prisma.adminPanelIpWhitelist.create({
+        data: { ipAddress: body.ipAddress },
+      });
+      await createAuditLog({
+        action: "create",
+        entity: "AdminPanelIpWhitelist",
+        entityId: row.id,
+        details: JSON.stringify({ ipAddress: row.ipAddress }),
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return row;
+    },
+    { body: t.Object({ ipAddress: t.String() }) },
+  )
+  .delete(
+    "/ip-whitelist/:id",
+    async ({ params, request, ip, auth }) => {
+      await prisma.adminPanelIpWhitelist.delete({ where: { id: params.id } });
+      await createAuditLog({
+        action: "delete",
+        entity: "AdminPanelIpWhitelist",
+        entityId: params.id,
+        ctx: getAuditCtx(auth, { ip, userAgent: request.headers.get("user-agent") ?? undefined }),
+      });
+      return { success: true };
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
   // Audit logs
   .get("/audit-logs", async ({ query }) => {
     const where: Record<string, unknown> = {};
