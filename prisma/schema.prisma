@@ -178,7 +178,7 @@ model Report {
   categoryId       String?
   subcategoryId    String?
   title            String?
-  description      String
+  description      String @db.Text
   organizationType String?
   organizationName String?
   province         String?

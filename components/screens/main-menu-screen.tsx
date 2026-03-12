@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { routes } from "@/lib/routes";
+import { toPersianNum } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { api } from "@/lib/edyen";
 
@@ -68,7 +69,7 @@ export function MainMenuScreen() {
             <Coins className="h-5 w-5" />
             توکن‌های من
             <span className="bg-primary/10 text-primary mr-auto rounded-full px-2 py-1 text-sm">
-              {user?.tokensCount || 0}
+              {toPersianNum(user?.tokensCount ?? 0)}
             </span>
           </Button>
 

@@ -11,9 +11,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
@@ -87,26 +84,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     پنل کاربری
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
+                <DropdownMenuItem asChild>
+                  <Link href={routes.settings} className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
                     تنظیمات
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuCheckboxItem
-                      checked={state.language === "fa"}
-                      onCheckedChange={() => setLanguage("fa")}
-                    >
-                      فارسی
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                      checked={state.language === "en"}
-                      onCheckedChange={() => setLanguage("en")}
-                    >
-                      English
-                    </DropdownMenuCheckboxItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (

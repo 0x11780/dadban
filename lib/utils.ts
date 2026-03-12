@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** عدد را به اعداد فارسی (۱، ۲، ۳، ...) تبدیل می‌کند */
+export function toPersianNum(n: number): string {
+  return n.toLocaleString("fa-IR");
+}
+
 /** زمان نسبی به فارسی: الان، ۱ دقیقه پیش، ۲ ساعت پیش، ۳ روز پیش */
 export function formatTimeAgo(dateStr: string): string {
   const date = new Date(dateStr);

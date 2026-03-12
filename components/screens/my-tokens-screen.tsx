@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 import { api } from "@/lib/edyen";
-import { formatTimeAgo } from "@/lib/utils";
+import { formatTimeAgo, toPersianNum } from "@/lib/utils";
 import { DADBAN_INVITE_TOKEN_KEY } from "@/lib/edyen";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,9 @@ export function MyTokensScreen() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="text-center">
-            <div className="text-primary mb-2 text-6xl font-bold">{user?.tokensCount || 0}</div>
+            <div className="text-primary mb-2 text-6xl font-bold">
+              {toPersianNum(user?.tokensCount ?? 0)}
+            </div>
             <p className="text-muted-foreground">توکن فعال</p>
           </div>
 
@@ -118,7 +120,7 @@ export function MyTokensScreen() {
                         {/* Use a badge */}
                         <Badge variant={tx.amount > 0 ? "default" : "destructive"}>
                           {tx.amount > 0 ? "+" : "-"}
-                          {tx.amount}
+                          {toPersianNum(Math.abs(tx.amount))}
                         </Badge>
                         <span className="text-muted-foreground text-xs">
                           {formatTimeAgo(tx.createdAt)}
