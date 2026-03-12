@@ -258,7 +258,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
 
       const baseURL =
         process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      const registerLink = `${baseURL}/register?code=${code}`;
+      const registerLink = `${baseURL}/auth/register?code=${code}`;
 
       // If email provided, send invitation email (TODO: integrate Resend/SendGrid)
       if (invitedEmail) {
@@ -304,8 +304,16 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
     "/register-by-code",
     async ({ body }) => {
       if (!body.email?.trim()) return { ok: false, error: "ایمیل الزامی است" };
-      if (body.passkey.length < 6)
-        return { ok: false, error: "رمز عبور باید حداقل ۶ کاراکتر باشد" };
+      if (body.passkey.length < 8)
+        return { ok: false, error: "رمز عبور باید حداقل ۸ کاراکتر باشد" };
+      if (!/[$@#!%*?&#^()[\]{}_\-+=.,:;]/.test(body.passkey))
+        return { ok: false, error: "رمز عبور باید حداقل یک کاراکتر خاص داشته باشد" };
+      if (!/[A-Z]/.test(body.passkey))
+        return { ok: false, error: "رمز عبور باید حداقل یک حرف بزرگ داشته باشد" };
+      if (!/[a-z]/.test(body.passkey))
+        return { ok: false, error: "رمز عبور باید حداقل یک حرف کوچک داشته باشد" };
+      if (!/[0-9]/.test(body.passkey))
+        return { ok: false, error: "رمز عبور باید حداقل یک عدد داشته باشد" };
 
       const normalizedCode = body.code.trim().toUpperCase();
       const inviteCode = await prisma.inviteCode.findFirst({

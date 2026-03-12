@@ -25,11 +25,7 @@ export function InviteCodeScreen() {
     const result = await validateInviteCode(code);
 
     if (result.ok) {
-      if (result.hasPasskey) {
-        router.push(routes.passkeyVerify);
-      } else {
-        router.push(routes.passkeyRegister);
-      }
+      router.push(`${routes.register}?code=${encodeURIComponent(code)}`);
     } else {
       setError(result.error);
     }

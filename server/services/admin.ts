@@ -617,7 +617,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       return {
         ...invite,
-        inviteLink: `${baseURL}/register?code=${code}`,
+        inviteLink: `${baseURL}/auth/register?code=${code}`,
       };
     },
     {
