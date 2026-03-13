@@ -26,7 +26,10 @@ import { cn } from "@/lib/utils";
 function LogoutButton() {
   const router = useRouter();
   const handleLogout = async () => {
-    await fetch("/api/admin-panel/auth/logout", { method: "POST", credentials: "include" });
+    await fetch("/api/admin-panel/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
     router.replace("/admin/login");
   };
   return (
@@ -43,10 +46,10 @@ function LogoutButton() {
 }
 
 const navItems = [
+  { href: "/admin/reports", label: "گزارش‌ها", icon: FileText },
   { href: "/admin/categories", label: "دسته‌بندی‌ها", icon: FolderTree },
   { href: "/admin/users", label: "کاربران", icon: Users },
   { href: "/admin/people", label: "افراد", icon: UserCircle },
-  { href: "/admin/reports", label: "گزارش‌ها", icon: FileText },
   { href: "/admin/logs", label: "لاگ‌ها", icon: ScrollText },
 ];
 
@@ -70,7 +73,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <AdminAuthGuard>
       <div className="flex min-h-screen" dir="rtl">
         {pathname !== "/admin/login" && (
-          <aside className="border-border bg-muted/30 flex w-64 flex-col gap-2 border-s p-4">
+          <aside className="border-border bg-muted/70 flex w-64 flex-col gap-2 border-s p-4">
             <h2 className="mb-4 px-2 text-lg font-bold">پنل ادمین</h2>
             {navItems.map(({ href, label, icon: Icon }) => (
               <Link

@@ -122,14 +122,14 @@ export default function AdminCitiesPage() {
     );
 
   return (
-    <div dir="rtl" className="text-right">
-      <div className="mb-6 flex flex-row-reverse flex-wrap items-center justify-between gap-4">
+    <div dir="rtl" className="text-start">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">شهرها</h1>
-        <div className="flex flex-row-reverse items-center gap-2">
+        <div className="flex items-center gap-2">
           <select
             value={filterProvinceId}
             onChange={(e) => setFilterProvinceId(e.target.value)}
-            className="border-input h-9 rounded-md border px-3"
+            className="border-input h-9 rounded-md border px-3 text-start"
             dir="rtl"
           >
             <option value="">همه استان‌ها</option>
@@ -151,23 +151,23 @@ export default function AdminCitiesPage() {
           <CardTitle>لیست شهرها</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-end">نام</TableHead>
-                <TableHead className="text-end">استان</TableHead>
-                <TableHead className="text-end">ترتیب</TableHead>
-                <TableHead className="w-24 text-end">عملیات</TableHead>
+                <TableHead>نام</TableHead>
+                <TableHead>استان</TableHead>
+                <TableHead>ترتیب</TableHead>
+                <TableHead className="w-24">عملیات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell className="text-end">{c.name}</TableCell>
-                  <TableCell className="text-end">{c.province.name}</TableCell>
-                  <TableCell className="text-end">{c.sortOrder}</TableCell>
-                  <TableCell className="text-end">
-                    <div className="flex justify-end gap-2">
+                  <TableCell>{c.name}</TableCell>
+                  <TableCell>{c.province.name}</TableCell>
+                  <TableCell dir="ltr">{c.sortOrder}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-start gap-2">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -184,7 +184,7 @@ export default function AdminCitiesPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent dir="rtl" className="text-right">
+        <DialogContent dir="rtl" className="text-start">
           <DialogHeader>
             <DialogTitle>{editing ? "ویرایش شهر" : "افزودن شهر"}</DialogTitle>
           </DialogHeader>
@@ -202,7 +202,7 @@ export default function AdminCitiesPage() {
               <select
                 value={form.provinceId}
                 onChange={(e) => setForm((f) => ({ ...f, provinceId: e.target.value }))}
-                className="border-input h-9 w-full rounded-md border px-3"
+                className="border-input h-9 w-full rounded-md border px-3 text-start"
                 dir="rtl"
                 required
               >
@@ -224,7 +224,7 @@ export default function AdminCitiesPage() {
                 className="text-left"
               />
             </div>
-            <DialogFooter className="flex-row-reverse gap-2 sm:gap-0">
+            <DialogFooter className="flex flex-row-reverse gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 انصراف
               </Button>

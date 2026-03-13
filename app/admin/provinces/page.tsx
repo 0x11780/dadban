@@ -91,8 +91,8 @@ export default function AdminProvincesPage() {
     );
 
   return (
-    <div dir="rtl" className="text-right">
-      <div className="mb-6 flex flex-row-reverse items-center justify-between gap-4">
+    <div dir="rtl" className="text-start">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">استان‌ها</h1>
         <Button onClick={openCreate}>
           <Plus className="me-2 h-4 w-4" />
@@ -105,23 +105,21 @@ export default function AdminProvincesPage() {
           <CardTitle>لیست استان‌ها</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table dir="rtl">
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">نام</TableHead>
-                <TableHead className="text-right">ترتیب</TableHead>
-                <TableHead className="w-24 text-right">عملیات</TableHead>
+                <TableHead>نام</TableHead>
+                <TableHead>ترتیب</TableHead>
+                <TableHead className="w-24">عملیات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="text-right">{p.name}</TableCell>
-                  <TableCell className="text-right" dir="ltr">
-                    {p.sortOrder}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex flex-row-reverse justify-start gap-2">
+                  <TableCell>{p.name}</TableCell>
+                  <TableCell dir="ltr">{p.sortOrder}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-start gap-2">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -138,7 +136,7 @@ export default function AdminProvincesPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent dir="rtl" className="text-right">
+        <DialogContent dir="rtl" className="text-start">
           <DialogHeader>
             <DialogTitle>{editing ? "ویرایش استان" : "افزودن استان"}</DialogTitle>
           </DialogHeader>
@@ -161,7 +159,7 @@ export default function AdminProvincesPage() {
                 className="text-left"
               />
             </div>
-            <DialogFooter className="flex flex-row-reverse gap-2 sm:gap-0">
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button type="submit">{editing ? "ذخیره" : "افزودن"}</Button>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 انصراف

@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -60,48 +61,53 @@ export default function AdminLogsPage() {
       {loading ? (
         <p>در حال بارگذاری...</p>
       ) : (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>تاریخ</TableHead>
-                <TableHead>عملیات</TableHead>
-                <TableHead>موجودیت</TableHead>
-                <TableHead>کاربر</TableHead>
-                <TableHead>جزئیات</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((l) => (
-                <TableRow key={l.id}>
-                  <TableCell className="whitespace-nowrap">
-                    {new Date(l.createdAt).toLocaleString("fa-IR")}
-                  </TableCell>
-                  <TableCell>{l.action}</TableCell>
-                  <TableCell>
-                    {l.entity}
-                    {l.entityId && ` (${l.entityId.slice(0, 8)}...)`}
-                  </TableCell>
-                  <TableCell>{l.user ? `${l.user.name} (${l.user.email})` : "—"}</TableCell>
-                  <TableCell className="max-w-xs truncate">{l.details ?? "—"}</TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>لیست لاگ‌های حسابرسی</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>تاریخ</TableHead>
+                  <TableHead>عملیات</TableHead>
+                  <TableHead>موجودیت</TableHead>
+                  <TableHead>کاربر</TableHead>
+                  <TableHead>جزئیات</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex justify-between">
-            <span>
-              صفحه {page} از {Math.ceil(total / 50) || 1}
-            </span>
-            <div className="flex gap-2">
-              <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                قبلی
-              </Button>
-              <Button disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)}>
-                بعدی
-              </Button>
+              </TableHeader>
+              <TableBody>
+                {logs.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {new Date(l.createdAt).toLocaleString("fa-IR")}
+                    </TableCell>
+                    <TableCell>{l.action}</TableCell>
+                    <TableCell>
+                      {l.entity}
+                      {l.entityId && ` (${l.entityId.slice(0, 8)}...)`}
+                    </TableCell>
+                    <TableCell>{l.user ? `${l.user.name} (${l.user.email})` : "—"}</TableCell>
+                    <TableCell className="max-w-xs truncate">{l.details ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="mt-4 flex justify-between">
+              <span>
+                صفحه {page} از {Math.ceil(total / 50) || 1}
+              </span>
+              <div className="flex gap-2">
+                <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  قبلی
+                </Button>
+                <Button disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)}>
+                  بعدی
+                </Button>
+              </div>
             </div>
-          </div>
-        </>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

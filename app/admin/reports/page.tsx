@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
@@ -91,68 +92,73 @@ export default function AdminReportsPage() {
       {loading ? (
         <p>در حال بارگذاری...</p>
       ) : (
-        <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>شخص</TableHead>
-                <TableHead>کاربر</TableHead>
-                <TableHead>تاریخ</TableHead>
-                <TableHead>وضعیت</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reports.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell>
-                    {r.person.firstName} {r.person.lastName}
-                  </TableCell>
-                  <TableCell>
-                    {r.user.name}
-                    <span className="text-muted-foreground text-sm"> ({r.user.email})</span>
-                  </TableCell>
-                  <TableCell>{new Date(r.createdAt).toLocaleDateString("fa-IR")}</TableCell>
-                  <TableCell>{statusBadge(r.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/reports/${r.id}`}>مشاهده</Link>
-                      </Button>
-                      {r.status === "pending" && (
-                        <>
-                          <Button size="sm" onClick={() => updateStatus(r.id, "accepted")}>
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => updateStatus(r.id, "rejected")}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>لیست گزارش‌ها</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>شخص</TableHead>
+                  <TableHead>کاربر</TableHead>
+                  <TableHead>تاریخ</TableHead>
+                  <TableHead>وضعیت</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="mt-4 flex justify-between">
-            <span>
-              صفحه {page} از {Math.ceil(total / 25) || 1}
-            </span>
-            <div className="flex gap-2">
-              <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                قبلی
-              </Button>
-              <Button disabled={page * 25 >= total} onClick={() => setPage((p) => p + 1)}>
-                بعدی
-              </Button>
+              </TableHeader>
+              <TableBody>
+                {reports.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      {r.person.firstName} {r.person.lastName}
+                    </TableCell>
+                    <TableCell>
+                      {r.user.name}
+                      <span className="text-muted-foreground text-sm"> ({r.user.email})</span>
+                    </TableCell>
+                    <TableCell>{new Date(r.createdAt).toLocaleDateString("fa-IR")}</TableCell>
+                    <TableCell>{statusBadge(r.status)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/admin/reports/${r.id}`}>مشاهده</Link>
+                        </Button>
+                        {r.status === "pending" && (
+                          <>
+                            <Button size="sm" onClick={() => updateStatus(r.id, "accepted")}>
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateStatus(r.id, "rejected")}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="mt-4 flex justify-between">
+              <span>
+                صفحه {page} از {Math.ceil(total / 25) || 1}
+              </span>
+              <div className="flex gap-2">
+                <Button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                  قبلی
+                </Button>
+                <Button disabled={page * 25 >= total} onClick={() => setPage((p) => p + 1)}>
+                  بعدی
+                </Button>
+              </div>
             </div>
-          </div>
-        </>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

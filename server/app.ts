@@ -107,7 +107,7 @@ export const app = new Elysia({ prefix: "/api", aot: false })
       const message = msg || err.message;
       const name = err.name;
       console.error("API error handler", { name, message, code });
-      set.status = code === "NOT_FOUND" ? 404 : 500;
+      set.status = code === "NOT_FOUND" ? 404 : err.message === "Unauthorized" ? 401 : 500;
 
       set.headers["Content-Type"] = `charset=utf-8`;
 

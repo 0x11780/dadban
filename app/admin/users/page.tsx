@@ -140,7 +140,7 @@ export default function AdminUsersPage() {
         <CardHeader>
           <CardTitle>لیست کاربران</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent dir="rtl">
           <Table>
             <TableHeader>
               <TableRow>

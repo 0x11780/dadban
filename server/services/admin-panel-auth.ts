@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { randomBytes } from "node:crypto";
 
 const ADMIN_PANEL_COOKIE = "admin_panel_session";
-const SESSION_DAYS = 7;
+const SESSION_MINUTES = 5;
 
 function generateToken() {
   return randomBytes(32).toString("hex");
@@ -73,7 +73,7 @@ export const adminPanelAuthService = new Elysia({
 
       const token = generateToken();
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + SESSION_DAYS);
+      expiresAt.setMinutes(expiresAt.getMinutes() + SESSION_MINUTES);
 
       await prisma.adminPanelSession.create({
         data: {
@@ -86,7 +86,7 @@ export const adminPanelAuthService = new Elysia({
 
       const secure = process.env.NODE_ENV === "production";
       set.headers["Set-Cookie"] =
-        `${ADMIN_PANEL_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 24 * 3600}${secure ? "; Secure" : ""}`;
+        `${ADMIN_PANEL_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MINUTES * 60}${secure ? "; Secure" : ""}`;
       return { success: true, username: panelUser.username };
     },
     {
@@ -96,8 +96,16 @@ export const adminPanelAuthService = new Elysia({
       }),
     },
   )
-  .post("/logout", async ({ set }) => {
-    set.headers["Set-Cookie"] = `${ADMIN_PANEL_COOKIE}=; Path=/; HttpOnly; Max-Age=0`;
+  .post("/logout", async ({ set, request }) => {
+    const cookieHeader = request.headers.get("Cookie") ?? "";
+    const match = cookieHeader.match(new RegExp(`${ADMIN_PANEL_COOKIE}=([^;]+)`));
+    const token = match?.[1];
+    if (token) {
+      await prisma.adminPanelSession.deleteMany({ where: { token } });
+    }
+    const secure = process.env.NODE_ENV === "production";
+    set.headers["Set-Cookie"] =
+      `${ADMIN_PANEL_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? "; Secure" : ""}`;
     return { success: true };
   })
   .get("/me", async ({ request }) => {

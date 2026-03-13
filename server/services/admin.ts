@@ -41,6 +41,7 @@ const adminGuard = new Elysia({ name: "adminGuard" }).derive(async ({ request })
 
 export const adminService = new Elysia({ prefix: "/admin", aot: false })
   .use(adminGuard)
+  .get("/me", () => ({ ok: true }))
   // Settings
   .get("/settings", async () => {
     const data = await getAllSettings();

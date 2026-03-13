@@ -105,140 +105,150 @@ export default function AdminSystemSettingsPage() {
           <CardHeader>
             <CardTitle>تنظیمات توکن و گزارش</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <Label htmlFor="reports_enabled" className="cursor-pointer">
-                {LABELS.reports_enabled}
-              </Label>
-              <Switch
-                id="reports_enabled"
-                checked={settings.reports_enabled}
-                onCheckedChange={(v) => setSettings((s) => ({ ...s, reports_enabled: v }))}
-              />
-            </div>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2">
+                <Label htmlFor="reports_enabled" className="cursor-pointer">
+                  {LABELS.reports_enabled}
+                </Label>
+                <Switch
+                  id="reports_enabled"
+                  checked={settings.reports_enabled}
+                  onCheckedChange={(v) => setSettings((s) => ({ ...s, reports_enabled: v }))}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="default_tokens_new_user">{LABELS.default_tokens_new_user}</Label>
-              <Input
-                id="default_tokens_new_user"
-                type="number"
-                min={0}
-                value={settings.default_tokens_new_user}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    default_tokens_new_user: Math.max(0, Number.parseInt(e.target.value, 10) || 0),
-                  }))
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="default_tokens_new_user">{LABELS.default_tokens_new_user}</Label>
+                <Input
+                  id="default_tokens_new_user"
+                  type="number"
+                  min={0}
+                  value={settings.default_tokens_new_user}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      default_tokens_new_user: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tokens_reward_approved_report">
-                {LABELS.tokens_reward_approved_report}
-              </Label>
-              <Input
-                id="tokens_reward_approved_report"
-                type="number"
-                min={0}
-                value={settings.tokens_reward_approved_report}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    tokens_reward_approved_report: Math.max(
-                      0,
-                      Number.parseInt(e.target.value, 10) || 0,
-                    ),
-                  }))
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="tokens_reward_approved_report">
+                  {LABELS.tokens_reward_approved_report}
+                </Label>
+                <Input
+                  id="tokens_reward_approved_report"
+                  type="number"
+                  min={0}
+                  value={settings.tokens_reward_approved_report}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      tokens_reward_approved_report: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tokens_deduct_false_report">
-                {LABELS.tokens_deduct_false_report}
-              </Label>
-              <Input
-                id="tokens_deduct_false_report"
-                type="number"
-                min={0}
-                value={settings.tokens_deduct_false_report}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    tokens_deduct_false_report: Math.max(
-                      0,
-                      Number.parseInt(e.target.value, 10) || 0,
-                    ),
-                  }))
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="tokens_deduct_false_report">
+                  {LABELS.tokens_deduct_false_report}
+                </Label>
+                <Input
+                  id="tokens_deduct_false_report"
+                  type="number"
+                  min={0}
+                  value={settings.tokens_deduct_false_report}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      tokens_deduct_false_report: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tokens_deduct_problematic_report">
-                {LABELS.tokens_deduct_problematic_report}
-              </Label>
-              <Input
-                id="tokens_deduct_problematic_report"
-                type="number"
-                min={0}
-                value={settings.tokens_deduct_problematic_report}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    tokens_deduct_problematic_report: Math.max(
-                      0,
-                      Number.parseInt(e.target.value, 10) || 0,
-                    ),
-                  }))
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="tokens_deduct_problematic_report">
+                  {LABELS.tokens_deduct_problematic_report}
+                </Label>
+                <Input
+                  id="tokens_deduct_problematic_report"
+                  type="number"
+                  min={0}
+                  value={settings.tokens_deduct_problematic_report}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      tokens_deduct_problematic_report: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tokens_reward_invited_activity">
-                {LABELS.tokens_reward_invited_activity}
-              </Label>
-              <Input
-                id="tokens_reward_invited_activity"
-                type="number"
-                min={0}
-                value={settings.tokens_reward_invited_activity}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    tokens_reward_invited_activity: Math.max(
-                      0,
-                      Number.parseInt(e.target.value, 10) || 0,
-                    ),
-                  }))
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="tokens_reward_invited_activity">
+                  {LABELS.tokens_reward_invited_activity}
+                </Label>
+                <Input
+                  id="tokens_reward_invited_activity"
+                  type="number"
+                  min={0}
+                  value={settings.tokens_reward_invited_activity}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      tokens_reward_invited_activity: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="max_invite_codes_unused">{LABELS.max_invite_codes_unused}</Label>
-              <Input
-                id="max_invite_codes_unused"
-                type="number"
-                min={0}
-                value={settings.max_invite_codes_unused}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    max_invite_codes_unused: Math.max(0, Number.parseInt(e.target.value, 10) || 0),
-                  }))
-                }
-              />
-              <p className="text-muted-foreground text-xs">
-                ۰ = نامحدود. کاربر نمی‌تواند بیش از این تعداد کد دعوت استفاده‌نشده داشته باشد.
-              </p>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="max_invite_codes_unused">{LABELS.max_invite_codes_unused}</Label>
+                <Input
+                  id="max_invite_codes_unused"
+                  type="number"
+                  min={0}
+                  value={settings.max_invite_codes_unused}
+                  onChange={(e) =>
+                    setSettings((s) => ({
+                      ...s,
+                      max_invite_codes_unused: Math.max(
+                        0,
+                        Number.parseInt(e.target.value, 10) || 0,
+                      ),
+                    }))
+                  }
+                />
+                <p className="text-muted-foreground text-xs">
+                  ۰ = نامحدود. کاربر نمی‌تواند بیش از این تعداد کد دعوت استفاده‌نشده داشته باشد.
+                </p>
+              </div>
 
-            <Button type="submit" disabled={saving}>
-              {saving ? "در حال ذخیره..." : "ذخیره تنظیمات"}
-            </Button>
+              <div className="md:col-span-2">
+                <Button type="submit" disabled={saving}>
+                  {saving ? "در حال ذخیره..." : "ذخیره تنظیمات"}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </form>
