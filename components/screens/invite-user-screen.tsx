@@ -60,11 +60,7 @@ export function InviteUserScreen() {
   }, []);
 
   useEffect(() => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) : null;
-    if (token || document.cookie.includes("better-auth")) {
-      void fetchMyCodes();
-    }
+    void fetchMyCodes();
   }, [fetchMyCodes]);
 
   const copyToClipboard = useCallback(
