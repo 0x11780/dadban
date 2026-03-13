@@ -1,6 +1,7 @@
 "use client";
 
 import { Progress } from "@/components/ui/progress";
+import { toPersianNum } from "@/lib/utils";
 
 interface ReportWizardProgressProps {
   step: number;
@@ -14,7 +15,7 @@ export function ReportWizardProgress({ step, total = 8 }: ReportWizardProgressPr
     <div className="space-y-2 pt-2">
       <Progress value={value} className="h-2" />
       <p className="text-muted-foreground text-center text-sm">
-        مرحله {step} از {total}
+        مرحله {toPersianNum(step)} از {toPersianNum(total)}
       </p>
     </div>
   );

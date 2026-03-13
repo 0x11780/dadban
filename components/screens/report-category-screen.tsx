@@ -88,25 +88,27 @@ export function ReportCategoryScreen() {
             </Select>
           </div>
 
-          {categoryId && selectedCategory?.children?.length ? (
-            <div className="space-y-2">
-              <Label htmlFor="subcategory">
-                زیردسته <span className="text-destructive">*</span>
-              </Label>
-              <Select value={subcategoryId} onValueChange={setSubcategoryId}>
-                <SelectTrigger id="subcategory" className="w-full">
-                  <SelectValue placeholder="انتخاب زیردسته..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedCategory.children.map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="subcategory">
+              زیردسته <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={subcategoryId}
+              onValueChange={setSubcategoryId}
+              disabled={!selectedCategory || selectedCategory.children.length === 0}
+            >
+              <SelectTrigger id="subcategory" className="w-full">
+                <SelectValue placeholder="انتخاب زیردسته..." />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedCategory?.children?.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex gap-3 pt-4">
             <Button variant="outline" onClick={() => router.back()} className="flex-1">

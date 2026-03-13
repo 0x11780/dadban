@@ -10,9 +10,21 @@ import { Clock, CheckCircle, XCircle, FileText } from "lucide-react";
 import type { RequestStatus, ReportCase } from "@/types";
 
 const statusConfig: Record<RequestStatus, { label: string; icon: typeof Clock; color: string }> = {
-  pending: { label: "در انتظار", icon: Clock, color: "text-amber-600 bg-amber-100" },
-  accepted: { label: "تایید شده", icon: CheckCircle, color: "text-green-600 bg-green-100" },
-  rejected: { label: "رد شده", icon: XCircle, color: "text-red-600 bg-red-100" },
+  pending: {
+    label: "در انتظار",
+    icon: Clock,
+    color: "text-amber-600 bg-amber-100",
+  },
+  accepted: {
+    label: "تایید شده",
+    icon: CheckCircle,
+    color: "text-green-600 bg-green-100",
+  },
+  rejected: {
+    label: "رد شده",
+    icon: XCircle,
+    color: "text-red-600 bg-red-100",
+  },
 };
 
 export function MyRequestsScreen() {
@@ -43,11 +55,15 @@ export function MyRequestsScreen() {
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-3 overflow-y-auto">
           {loading ? (
-            <div className="text-muted-foreground py-8 text-center">در حال بارگذاری...</div>
+            <div className="text-muted-foreground flex min-h-[330px] items-center justify-center gap-3">
+              در حال بارگذاری...
+            </div>
           ) : requests.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">
-              <FileText className="text-muted-foreground/50 mx-auto mb-3 h-12 w-12" />
-              <p>هیچ درخواستی ثبت نشده است</p>
+            <div className="text-muted-foreground flex min-h-[330px] items-center justify-center gap-3">
+              <FileText className="text-muted-foreground/40 mb-3 h-10 w-10" />
+              <p className="text-muted-foreground/50 text-center text-lg font-bold">
+                هیچ درخواستی ثبت نشده است
+              </p>
             </div>
           ) : (
             requests.map((request) => {
@@ -62,7 +78,7 @@ export function MyRequestsScreen() {
                   className="h-auto w-full justify-between py-6"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full">
+                    <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
                       <FileText className="text-primary h-5 w-5" />
                     </div>
                     <div className="text-start">
