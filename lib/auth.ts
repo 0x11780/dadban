@@ -1,7 +1,9 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { betterAuth } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { createAuditLog } from "@/server/services/audit";
 
 const adapter = new PrismaMariaDb({
   host: process.env.DATABASE_HOST || "127.0.0.1",
@@ -25,4 +27,27 @@ export const auth = betterAuth({
     disableSignUp: true, // invite-only: sign up only via invitation
   },
   // Invite flow is handled by custom InviteCode + /register page, not app-invite
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/sign-in/email") {
+        const newSession = ctx.context.newSession;
+        if (newSession?.user?.id) {
+          await createAuditLog({
+            action: "login",
+            entity: "User",
+            entityId: newSession.user.id,
+            details: JSON.stringify({ email: newSession.user.email }),
+            ctx: {
+              userId: newSession.user.id,
+              ipAddress:
+                ctx.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim() ??
+                ctx.headers?.get?.("x-real-ip") ??
+                undefined,
+              userAgent: ctx.headers?.get?.("user-agent") ?? undefined,
+            },
+          });
+        }
+      }
+    }),
+  },
 });

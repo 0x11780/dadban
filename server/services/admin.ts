@@ -20,9 +20,17 @@ export type AdminAuth =
 function getAuditCtx(
   auth: AdminAuth,
   ctx: { ip?: { address?: string }; userAgent?: string },
-): { userId?: string; ipAddress?: string; userAgent?: string } {
+): {
+  userId?: string;
+  adminPanelUserId?: string;
+  adminPanelUsername?: string;
+  ipAddress?: string;
+  userAgent?: string;
+} {
   return {
     userId: auth.type === "user" ? auth.session.user.id : undefined,
+    adminPanelUserId: auth.type === "panel" ? auth.adminPanelUser.id : undefined,
+    adminPanelUsername: auth.type === "panel" ? auth.adminPanelUser.username : undefined,
     ipAddress: ctx.ip?.address,
     userAgent: ctx.userAgent,
   };

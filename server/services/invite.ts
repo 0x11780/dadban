@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "../db";
+import { createAuditLog } from "./audit";
 import { auth } from "@/lib/auth";
 import { resolveInviteToken } from "../lib/auth-invite";
 import { getSettingNumber, SETTING_KEYS } from "../lib/settings";
@@ -34,7 +35,7 @@ export async function ensureUniqueInviteCode(): Promise<string> {
 export const inviteService = new Elysia({ prefix: "/invite", aot: false })
   .post(
     "/validate",
-    async ({ body }) => {
+    async ({ body, request, ip }) => {
       const normalizedCode = body.code.trim().toUpperCase();
       const inviteCode = await prisma.inviteCode.findFirst({
         where: {
@@ -62,6 +63,14 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
         include: { user: true },
       });
 
+      await createAuditLog({
+        action: "validate",
+        entity: "InviteCode",
+        entityId: inviteCode.id,
+        details: JSON.stringify({ code: inviteCode.code }),
+        ctx: { ipAddress: ip?.address, userAgent: request.headers.get("user-agent") ?? undefined },
+      });
+
       const hasPasskey = !!session.passkeyHash;
       return {
         ok: true,
@@ -76,7 +85,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
   )
   .post(
     "/register",
-    async ({ body }) => {
+    async ({ body, request, ip }) => {
       if (body.passkey.length < 6) {
         return { ok: false, error: "رمز عبور باید حداقل ۶ کاراکتر باشد" };
       }
@@ -129,6 +138,18 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
         return u;
       });
 
+      await createAuditLog({
+        action: "register",
+        entity: "User",
+        entityId: user.id,
+        details: JSON.stringify({ inviteCode: session.inviteCode.code }),
+        ctx: {
+          userId: user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
+      });
+
       const approvedRequestsCount = await prisma.report.count({
         where: { userId: user.id, status: "accepted" },
       });
@@ -156,7 +177,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
   )
   .post(
     "/verify",
-    async ({ body }) => {
+    async ({ body, request, ip }) => {
       const session = await prisma.inviteSession.findUnique({
         where: { token: body.token },
         include: { user: true, inviteCode: true },
@@ -178,6 +199,18 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
       }
 
       const user = session.user!;
+      await createAuditLog({
+        action: "login",
+        entity: "User",
+        entityId: user.id,
+        details: JSON.stringify({ inviteCode: session.inviteCode?.code }),
+        ctx: {
+          userId: user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
+      });
+
       const [approvedRequestsCount] = await Promise.all([
         prisma.report.count({
           where: { userId: user.id, status: "accepted" },
@@ -239,7 +272,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
   })
   .post(
     "/invite-user",
-    async ({ body, request, status }) => {
+    async ({ body, request, status, ip }) => {
       // Support both: 1) Bearer token (InviteCode users), 2) Session cookie (accept-invitation users)
       let inviterId: string | null = null;
       const inviteUser = await resolveInviteToken(request.headers.get("Authorization"));
@@ -270,11 +303,23 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
       const code = await ensureUniqueInviteCode();
       const invitedEmail = body.type === "personal" ? (body.email?.trim() ?? null) : null;
 
-      await prisma.inviteCode.create({
+      const inviteCodeRecord = await prisma.inviteCode.create({
         data: {
           code,
           ...(inviterId ? { inviter: { connect: { id: inviterId } } } : {}),
           invitedEmail,
+        },
+      });
+
+      await createAuditLog({
+        action: "create",
+        entity: "InviteCode",
+        entityId: inviteCodeRecord.id,
+        details: JSON.stringify({ code, type: body.type, invitedEmail }),
+        ctx: {
+          userId: inviterId ?? undefined,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
         },
       });
 
@@ -360,7 +405,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
   )
   .post(
     "/register-by-code",
-    async ({ body }) => {
+    async ({ body, request, ip }) => {
       if (!body.email?.trim()) return { ok: false, error: "ایمیل الزامی است" };
       if (body.passkey.length < 8)
         return { ok: false, error: "رمز عبور باید حداقل ۸ کاراکتر باشد" };
@@ -405,7 +450,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
             accounts: {
               create: {
                 accountId: email,
-                providerId: "invite-passkey",
+                providerId: "credential",
                 password: passkeyHash,
               },
             },
@@ -432,6 +477,18 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
           data: { usedById: u.id, isActive: false },
         });
         return u;
+      });
+
+      await createAuditLog({
+        action: "register",
+        entity: "User",
+        entityId: user.id,
+        details: JSON.stringify({ inviteCode: normalizedCode, email: body.email }),
+        ctx: {
+          userId: user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
       });
 
       const [approvedRequestsCount] = await Promise.all([

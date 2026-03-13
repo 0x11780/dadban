@@ -79,10 +79,12 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         action: "create",
         entity: "Report",
         entityId: report.id,
-        userId: session.user.id,
         details: JSON.stringify({ personId: body.personId }),
-        ipAddress: ip?.address,
-        userAgent: request.headers.get("user-agent") ?? undefined,
+        ctx: {
+          userId: session.user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
       });
       const isInviteUser =
         reportCountBefore === 0 &&
@@ -155,13 +157,23 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
   })
   .get(
     "/:id",
-    async ({ params, session }) => {
+    async ({ params, session, request, ip }) => {
       if (!session?.user?.id) throw new Error("Unauthorized");
       const report = await prisma.report.findFirst({
         where: { id: params.id, userId: session.user.id },
         include: { person: true, documents: true },
       });
       if (!report) throw new Error("Not found");
+      await createAuditLog({
+        action: "view",
+        entity: "Report",
+        entityId: report.id,
+        ctx: {
+          userId: session.user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
+      });
       return report;
     },
     { params: t.Object({ id: t.String() }) },
@@ -184,9 +196,11 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         action: "approve",
         entity: "Report",
         entityId: report.id,
-        userId: session.user.id,
-        ipAddress: ip?.address,
-        userAgent: request.headers.get("user-agent") ?? undefined,
+        ctx: {
+          userId: session.user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
       });
       return report;
     },
@@ -210,9 +224,11 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         action: "reject",
         entity: "Report",
         entityId: report.id,
-        userId: session.user.id,
-        ipAddress: ip?.address,
-        userAgent: request.headers.get("user-agent") ?? undefined,
+        ctx: {
+          userId: session.user.id,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
       });
       return report;
     },

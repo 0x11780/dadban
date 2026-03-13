@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "../db";
 import { auth } from "@/lib/auth";
+import { createAuditLog } from "./audit";
 import { randomBytes } from "node:crypto";
 
 const ADMIN_PANEL_COOKIE = "admin_panel_session";
@@ -84,6 +85,19 @@ export const adminPanelAuthService = new Elysia({
         },
       });
 
+      await createAuditLog({
+        action: "login",
+        entity: "AdminPanel",
+        entityId: panelUser.id,
+        details: JSON.stringify({ username: panelUser.username }),
+        ctx: {
+          adminPanelUserId: panelUser.id,
+          adminPanelUsername: panelUser.username,
+          ipAddress: clientIp,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
+      });
+
       const secure = process.env.NODE_ENV === "production";
       set.headers["Set-Cookie"] =
         `${ADMIN_PANEL_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_MINUTES * 60}${secure ? "; Secure" : ""}`;
@@ -96,11 +110,29 @@ export const adminPanelAuthService = new Elysia({
       }),
     },
   )
-  .post("/logout", async ({ set, request }) => {
+  .post("/logout", async ({ set, request, ip }) => {
     const cookieHeader = request.headers.get("Cookie") ?? "";
     const match = cookieHeader.match(new RegExp(`${ADMIN_PANEL_COOKIE}=([^;]+)`));
     const token = match?.[1];
     if (token) {
+      const session = await prisma.adminPanelSession.findFirst({
+        where: { token },
+        include: { adminPanelUser: true },
+      });
+      if (session) {
+        await createAuditLog({
+          action: "logout",
+          entity: "AdminPanel",
+          entityId: session.adminPanelUser.id,
+          details: JSON.stringify({ username: session.adminPanelUser.username }),
+          ctx: {
+            adminPanelUserId: session.adminPanelUser.id,
+            adminPanelUsername: session.adminPanelUser.username,
+            ipAddress: ip?.address,
+            userAgent: request.headers.get("user-agent") ?? undefined,
+          },
+        });
+      }
       await prisma.adminPanelSession.deleteMany({ where: { token } });
     }
     const secure = process.env.NODE_ENV === "production";
