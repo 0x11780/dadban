@@ -41,3 +41,18 @@ export const api = treaty<App>(getBaseUrl(), {
     return fetch(url, { ...options, headers, credentials: "include" });
   },
 }).api;
+
+/** دریافت جزئیات گزارش در انتظار (برای اعتبارسنج) */
+export async function getPendingReportDetail(id: string) {
+  const token = getInviteToken();
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/reports/pending/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "خطا در دریافت گزارش");
+  }
+  return res.json();
+}

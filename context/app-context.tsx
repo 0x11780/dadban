@@ -33,7 +33,7 @@ interface AppContextType {
   submitReport: () => void;
   selectRequest: (request: ReportCase) => void;
   approveRequest: (requestId: string) => void;
-  rejectRequest: (requestId: string) => void;
+  rejectRequest: (requestId: string, rejectionReason: "problematic" | "false") => void;
   getFamousPeople: (search?: string) => Promise<Person[]>;
   getMyRequests: () => Promise<ReportCase[]>;
   getPendingRequests: () => Promise<ReportCase[]>;
@@ -224,10 +224,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(String(error));
   }, []);
 
-  const rejectRequest = useCallback(async (requestId: string) => {
-    const { error } = await api.reports({ id: requestId }).reject.put();
-    if (error) throw new Error(String(error));
-  }, []);
+  const rejectRequest = useCallback(
+    async (requestId: string, rejectionReason: "problematic" | "false") => {
+      const { error } = await api.reports({ id: requestId }).reject.put({
+        rejectionReason,
+      });
+      if (error) throw new Error(String(error));
+    },
+    [],
+  );
 
   const getFamousPeople = useCallback(async (search?: string) => {
     const { data, error } = await api.people.famous.get({ query: { search } });

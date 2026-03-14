@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Check, X, ChevronRight, ChevronLeft, User } from "lucide-react";
+import { FileText, ChevronRight, ChevronLeft, User } from "lucide-react";
 
 export function ApprovalListScreen() {
   const router = useRouter();
-  const { getPendingRequests, approveRequest, rejectRequest } = useApp();
+  const { getPendingRequests } = useApp();
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [pendingRequests, setPendingRequests] = useState<
     Array<{
       id: string;
@@ -32,26 +31,6 @@ export function ApprovalListScreen() {
   const totalPages = Math.ceil(pendingRequests.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentRequests = pendingRequests.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleApprove = async (requestId: string) => {
-    try {
-      await approveRequest(requestId);
-      setSelectedRequest(null);
-      getPendingRequests().then(setPendingRequests);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleReject = async (requestId: string) => {
-    try {
-      await rejectRequest(requestId);
-      setSelectedRequest(null);
-      getPendingRequests().then(setPendingRequests);
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   return (
     <div className="bg-background flex flex-col p-4">
@@ -79,12 +58,7 @@ export function ApprovalListScreen() {
           ) : (
             currentRequests.map((request) => (
               <div key={request.id} className="border-border overflow-hidden rounded-lg border">
-                <div
-                  className="hover:bg-muted/50 flex cursor-pointer items-center gap-3 p-4"
-                  onClick={() =>
-                    setSelectedRequest(selectedRequest === request.id ? null : request.id)
-                  }
-                >
+                <div className="hover:bg-muted/50 flex items-center gap-3 p-4">
                   <div className="bg-primary/10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full">
                     <User className="text-primary h-5 w-5" />
                   </div>
@@ -96,37 +70,14 @@ export function ApprovalListScreen() {
                       {new Date(request.createdAt).toLocaleDateString("fa-IR")}
                     </div>
                   </div>
-                  <ChevronRight
-                    className={`text-muted-foreground h-5 w-5 transition-transform ${
-                      selectedRequest === request.id ? "rotate-90" : ""
-                    }`}
-                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/panel/approval/${request.id}`)}
+                  >
+                    جزئیات
+                  </Button>
                 </div>
-
-                {selectedRequest === request.id && (
-                  <div className="border-border bg-muted/30 space-y-3 border-t p-4">
-                    <p className="text-muted-foreground line-clamp-3 text-sm">
-                      {request.description}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleApprove(request.id)}
-                        className="flex-1 gap-2 bg-green-600 text-white hover:bg-green-700"
-                      >
-                        <Check className="h-4 w-4" />
-                        تایید
-                      </Button>
-                      <Button
-                        onClick={() => handleReject(request.id)}
-                        variant="destructive"
-                        className="flex-1 gap-2"
-                      >
-                        <X className="h-4 w-4" />
-                        رد
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             ))
           )}

@@ -16,10 +16,20 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle, Copy, Check, UserCheck, Ticket, UserPlus } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle,
+  InfoIcon,
+  Copy,
+  Check,
+  UserCheck,
+  Ticket,
+  UserPlus,
+} from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { formatTimeAgo } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 type InviteCodeItem = {
   id: string;
@@ -129,18 +139,14 @@ export function InviteUserScreen() {
     } | null;
     const code = res?.code ?? "";
     setInviteCode(code);
-    setSuccessMessage(
-      inviteType === "personal" && trimmedEmail
-        ? `دعوت به ${trimmedEmail} ارسال شد.`
-        : "کد دعوت با موفقیت ایجاد شد. این کد یک‌بار مصرف است.",
-    );
+    setSuccessMessage("کد دعوت با موفقیت ایجاد شد. این کد یک‌بار مصرف است.");
     setEmail("");
     setIsLoading(false);
     void fetchMyCodes();
   };
 
   return (
-    <div className="bg-background flex flex-col items-center p-4">
+    <div className="bg-background container mx-auto flex flex-col items-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-foreground text-xl font-bold">دعوت کاربر</CardTitle>
@@ -221,10 +227,10 @@ export function InviteUserScreen() {
                     </div>
 
                     {error && (
-                      <div className="text-destructive bg-destructive/10 flex items-center gap-2 rounded-lg p-3">
-                        <AlertCircle className="h-5 w-5 shrink-0" />
-                        <span className="text-sm">{error}</span>
-                      </div>
+                      <Alert variant="error">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <AlertDescription className="text-xs">{error}</AlertDescription>
+                      </Alert>
                     )}
                   </>
                 )}
@@ -233,7 +239,9 @@ export function InviteUserScreen() {
                   <div className="space-y-3 rounded-lg border border-green-200 bg-green-50/50 p-4 dark:border-green-900/50 dark:bg-green-950/20">
                     <div className="flex items-start gap-2">
                       <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-500" />
-                      <span className="text-foreground text-sm">{successMessage}</span>
+                      <span className="text-foreground text-sm font-semibold">
+                        {successMessage}
+                      </span>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-muted-foreground relative -bottom-1 text-xs">
@@ -272,6 +280,14 @@ export function InviteUserScreen() {
                           </Button>
                         </InputGroupAddon>
                       </InputGroup>
+
+                      <Alert variant="default">
+                        <InfoIcon className="h-4 w-4 shrink-0" />
+                        <AlertTitle className="text-xs">اطلاعات</AlertTitle>
+                        <AlertDescription className="text-xs">
+                          این کد دعوت یک‌بار مصرف است. هر کاربر می‌تواند از آن یک بار استفاده کند
+                        </AlertDescription>
+                      </Alert>
                     </div>
                   </div>
                 )}

@@ -175,6 +175,38 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
     return reports;
   })
   .get(
+    "/pending/:id",
+    async ({ params, session, request }) => {
+      if (!session?.user?.id) throw new Error("Unauthorized");
+      const report = await prisma.report.findFirst({
+        where: { id: params.id, status: "pending" },
+        include: {
+          person: true,
+          user: { select: { id: true, name: true, email: true } },
+          category: true,
+          subcategory: true,
+          documents: true,
+        },
+      });
+      if (!report) throw new Error("Not found");
+      const admin = await prisma.admin.findUnique({
+        where: { userId: session.user.id },
+      });
+      let canView = !!admin;
+      if (!canView) {
+        const [dbUser, approvedCount, minRequired] = await Promise.all([
+          prisma.user.findUnique({ where: { id: session.user.id }, select: { role: true } }),
+          prisma.report.count({ where: { userId: session.user.id, status: "accepted" } }),
+          getSettingNumber(SETTING_KEYS.MIN_APPROVED_REPORTS_FOR_APPROVAL),
+        ]);
+        canView = dbUser?.role === "validator" || approvedCount >= minRequired;
+      }
+      if (!canView) throw new Error("Forbidden");
+      return report;
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  .get(
     "/:id",
     async ({ params, session, request, ip }) => {
       if (!session?.user?.id) throw new Error("Unauthorized");
@@ -217,11 +249,39 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         throw new Error("Forbidden: نیاز به نقش اعتبارسنج یا حداقل گزارش‌های تاییدشده");
       }
 
-      const report = await prisma.report.update({
+      const existing = await prisma.report.findUnique({
         where: { id: params.id },
-        data: { status: "accepted", reviewedBy: session.user.id, reviewedAt: new Date() },
-        include: { person: true },
+        include: { user: { select: { id: true } } },
       });
+      if (!existing || existing.status !== "pending")
+        throw new Error("Not found or already reviewed");
+
+      const report = await prisma.$transaction(async (tx) => {
+        const r = await tx.report.update({
+          where: { id: params.id },
+          data: { status: "accepted", reviewedBy: session.user.id, reviewedAt: new Date() },
+          include: { person: true },
+        });
+        await tx.reportReview.create({
+          data: {
+            reportId: r.id,
+            reviewerId: session.user.id,
+            action: "accepted",
+          },
+        });
+        return r;
+      });
+
+      const reward = await getSettingNumber(SETTING_KEYS.TOKENS_REWARD_APPROVED_REPORT);
+      const { addTokenTransaction, TOKEN_TRANSACTION_TYPES } =
+        await import("../lib/token-transaction");
+      await addTokenTransaction(
+        existing.userId,
+        reward,
+        TOKEN_TRANSACTION_TYPES.report_approved,
+        report.id,
+      );
+
       await createAuditLog({
         action: "approve",
         entity: "Report",
@@ -238,8 +298,12 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
   )
   .put(
     "/:id/reject",
-    async ({ params, request, ip, session }) => {
+    async ({ params, body, request, ip, session }) => {
       if (!session?.user?.id) throw new Error("Unauthorized");
+      const rejectionReason = body?.rejectionReason ?? "problematic";
+      if (rejectionReason !== "false" && rejectionReason !== "problematic") {
+        throw new Error("دلیل رد باید «نقص یا افشای اطلاعات» یا «گزارش اشتباه یا قصد تخریب» باشد");
+      }
       const admin = await prisma.admin.findUnique({
         where: { userId: session.user.id },
       });
@@ -256,15 +320,53 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
         throw new Error("Forbidden: نیاز به نقش اعتبارسنج یا حداقل گزارش‌های تاییدشده");
       }
 
-      const report = await prisma.report.update({
+      const existing = await prisma.report.findUnique({
         where: { id: params.id },
-        data: { status: "rejected", reviewedBy: session.user.id, reviewedAt: new Date() },
-        include: { person: true },
+        include: { user: { select: { id: true } } },
       });
+      if (!existing || existing.status !== "pending")
+        throw new Error("Not found or already reviewed");
+
+      const report = await prisma.$transaction(async (tx) => {
+        const r = await tx.report.update({
+          where: { id: params.id },
+          data: {
+            status: "rejected",
+            rejectionReason,
+            reviewedBy: session.user.id,
+            reviewedAt: new Date(),
+          },
+          include: { person: true },
+        });
+        await tx.reportReview.create({
+          data: {
+            reportId: r.id,
+            reviewerId: session.user.id,
+            action: "rejected",
+            rejectionReason,
+          },
+        });
+        return r;
+      });
+
+      const { getSettingNumber: gsn, SETTING_KEYS: SK } = await import("../lib/settings");
+      const { addTokenTransaction, TOKEN_TRANSACTION_TYPES } =
+        await import("../lib/token-transaction");
+      const deduct =
+        rejectionReason === "false"
+          ? await gsn(SK.TOKENS_DEDUCT_FALSE_REPORT)
+          : await gsn(SK.TOKENS_DEDUCT_PROBLEMATIC_REPORT);
+      const txType =
+        rejectionReason === "false"
+          ? TOKEN_TRANSACTION_TYPES.report_false
+          : TOKEN_TRANSACTION_TYPES.report_problematic;
+      await addTokenTransaction(existing.userId, -deduct, txType, report.id);
+
       await createAuditLog({
         action: "reject",
         entity: "Report",
         entityId: report.id,
+        details: JSON.stringify({ rejectionReason }),
         ctx: {
           userId: session.user.id,
           ipAddress: ip?.address,
@@ -273,5 +375,10 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
       });
       return report;
     },
-    { params: t.Object({ id: t.String() }) },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        rejectionReason: t.Optional(t.Union([t.Literal("false"), t.Literal("problematic")])),
+      }),
+    },
   );

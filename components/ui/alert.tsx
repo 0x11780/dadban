@@ -11,6 +11,8 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "text-destructive bg-yellow-50/40 *:data-[slot=alert-description]:text-yellow-700 [&>svg]:text-current",
+        error:
+          "text-destructive bg-red-50/40 *:data-[slot=alert-description]:text-red-700 [&>svg]:text-current",
       },
       size: {
         xs: "gap-x-1 gap-y-0 px-2 py-1 text-xs has-[>svg]:gap-x-1 [&>svg]:size-3",

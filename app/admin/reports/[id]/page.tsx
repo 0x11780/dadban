@@ -35,6 +35,14 @@ import {
   X,
 } from "lucide-react";
 
+type ReportReview = {
+  id: string;
+  action: string;
+  rejectionReason?: string | null;
+  createdAt: string;
+  reviewerId?: string | null;
+};
+
 type ReportDetail = {
   id: string;
   title?: string | null;
@@ -42,6 +50,7 @@ type ReportDetail = {
   status: string;
   rejectionReason?: string | null;
   reviewedAt?: string | null;
+  reviews?: ReportReview[];
   organizationType?: string | null;
   organizationName?: string | null;
   province?: string | null;
@@ -151,7 +160,7 @@ export default function AdminReportDetailPage() {
 
   const rejectionLabel = (r?: string | null) => {
     if (!r) return null;
-    return r === "false" ? "گزارش کاذب" : "مشکل‌دار";
+    return r === "false" ? "گزارش اشتباه یا قصد تخریب" : "نقص یا افشای اطلاعات";
   };
 
   if (!id) {
@@ -433,6 +442,47 @@ export default function AdminReportDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* بررسی‌ها */}
+        {report.reviews && report.reviews.length > 0 && (
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>بررسی‌ها ({report.reviews.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {report.reviews.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm"
+                  >
+                    <Badge variant={r.action === "accepted" ? "default" : "destructive"}>
+                      {r.action === "accepted" ? "تأیید" : "رد"}
+                    </Badge>
+                    {r.rejectionReason && (
+                      <span className="text-muted-foreground">
+                        (
+                        {r.rejectionReason === "false"
+                          ? "گزارش اشتباه/قصد تخریب"
+                          : "نقص یا افشای اطلاعات"}
+                        )
+                      </span>
+                    )}
+                    <span className="text-muted-foreground">
+                      {new Date(r.createdAt).toLocaleDateString("fa-IR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
@@ -440,8 +490,11 @@ export default function AdminReportDetailPage() {
           <DialogHeader>
             <DialogTitle>دلیل رد گزارش</DialogTitle>
             <DialogDescription>
-              لطفاً دلیل رد این گزارش را انتخاب کنید. در صورت «گزارش کاذب» امتیاز بیشتری از کاربر کسر
-              می‌شود.
+              لطفاً دلیل رد را انتخاب کنید.
+              <br />
+              <strong>رد نرم (نقص یا افشای اطلاعات):</strong> امتیاز کمتری کسر می‌شود.
+              <br />
+              <strong>رد سخت (گزارش اشتباه یا قصد تخریب):</strong> امتیاز بیشتری کسر می‌شود.
             </DialogDescription>
           </DialogHeader>
           <Select
@@ -452,8 +505,8 @@ export default function AdminReportDetailPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="problematic">مشکل‌دار</SelectItem>
-              <SelectItem value="false">گزارش کاذب</SelectItem>
+              <SelectItem value="problematic">رد نرم (نقص یا افشای اطلاعات)</SelectItem>
+              <SelectItem value="false">رد سخت (گزارش اشتباه یا قصد تخریب)</SelectItem>
             </SelectContent>
           </Select>
           <DialogFooter>

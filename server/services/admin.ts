@@ -473,6 +473,7 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
           category: true,
           subcategory: true,
           documents: true,
+          reviews: { orderBy: { createdAt: "desc" } },
         },
       });
       if (!report) throw new Error("Not found");
@@ -522,6 +523,18 @@ export const adminService = new Elysia({ prefix: "/admin", aot: false })
         },
         include: { person: true, user: { select: { id: true } } },
       });
+
+      if (body.status === "accepted" || body.status === "rejected") {
+        await prisma.reportReview.create({
+          data: {
+            reportId: report.id,
+            reviewerId: auth.type === "user" ? auth.session.user.id : undefined,
+            action: body.status,
+            rejectionReason:
+              body.status === "rejected" ? (rejectionReason ?? undefined) : undefined,
+          },
+        });
+      }
 
       if (body.status === "accepted" || body.status === "rejected") {
         const { getSettingNumber, SETTING_KEYS } = await import("../lib/settings");

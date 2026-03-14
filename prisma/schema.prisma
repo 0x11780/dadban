@@ -205,10 +205,26 @@ model Report {
   category    Category? @relation("ReportCategory", fields: [categoryId], references: [id], onDelete: SetNull)
   subcategory Category? @relation("ReportSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
   documents   ReportDocument[]
+  reviews     ReportReview[]
 
   @@index([userId])
   @@index([status])
   @@map("report")
+}
+
+/** بررسی‌های گزارش: تایید/رد توسط اعتبارسنج یا ادمین */
+model ReportReview {
+  id             String   @id @default(cuid())
+  reportId       String
+  reviewerId     String?   // User.id for validators; null for admin panel users
+  action         String    // "accepted" | "rejected"
+  rejectionReason String?  // "problematic" | "false" when action=rejected; problematic=نقص/افشا، false=گزارش اشتباه/قصد تخریب
+  createdAt      DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("report_review")
 }
 
 model ReportDocument {
