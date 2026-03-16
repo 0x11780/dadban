@@ -1,4 +1,4 @@
-import { Providers } from "./providers";
+import { Providers } from "../providers";
 import { AppLayout } from "@/components/app-layout";
 import { Toaster } from "@/components/ui/sonner";
 

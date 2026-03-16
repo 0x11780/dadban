@@ -295,7 +295,7 @@ export default function AdminUsersPage() {
                           گزینه‌ها
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openChangePasswordModal(u)}>
                           <Key className="ml-2 h-2 w-2" />
                           تغییر رمزعبور
