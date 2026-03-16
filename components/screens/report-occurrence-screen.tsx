@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 import { routes } from "@/lib/routes";
@@ -8,10 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ArrowRight, ArrowLeft, Clock, Calendar as CalendarIcon } from "lucide-react";
-import { DayPicker } from "react-day-picker/persian";
-import { faIR } from "react-day-picker/locale";
+import { ArrowRight, ArrowLeft, Clock } from "lucide-react";
+import { DatePicker } from "zaman";
 import { OCCURRENCE_FREQUENCIES, type OccurrenceFrequency } from "@/types";
 import { ReportWizardProgress } from "@/components/report-wizard-progress";
 import { cn } from "@/lib/utils";
@@ -25,7 +23,12 @@ export function ReportOccurrenceScreen() {
   const [date, setDate] = useState<Date | undefined>(
     state.currentReport?.occurrenceDate ? new Date(state.currentReport.occurrenceDate) : undefined,
   );
-  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+
+  const [hydrate, setHydrate] = useState(false);
+
+  useEffect(() => {
+    setHydrate(true);
+  }, []);
 
   const isValid = frequency !== "" && date !== undefined;
 
@@ -39,13 +42,15 @@ export function ReportOccurrenceScreen() {
     }
   };
 
-  const dateDisplay = date
-    ? date.toLocaleDateString("fa-IR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "انتخاب تاریخ";
+  const handleDateChange = (e: { value: Date | number }) => {
+    const d = typeof e.value === "number" ? new Date(e.value) : e.value;
+    if (!d) return;
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (d.getTime() <= today.getTime()) {
+      setDate(d);
+    }
+  };
 
   return (
     <div className="bg-background flex items-center justify-center p-4">
@@ -66,9 +71,11 @@ export function ReportOccurrenceScreen() {
               value={frequency}
               onValueChange={(v) => setFrequency(v as OccurrenceFrequency)}
               className="grid grid-cols-2 gap-3"
+              dir="rtl"
             >
               {OCCURRENCE_FREQUENCIES.map((f) => (
-                <div
+                <Label
+                  htmlFor={`freq-${f.value}`}
                   key={f.value}
                   className={cn(
                     "border-border flex items-center gap-3 rounded-lg border p-3 transition-colors",
@@ -78,13 +85,8 @@ export function ReportOccurrenceScreen() {
                   )}
                 >
                   <RadioGroupItem value={f.value} id={`freq-${f.value}`} className="shrink-0" />
-                  <Label
-                    htmlFor={`freq-${f.value}`}
-                    className="flex-1 cursor-pointer text-sm font-medium"
-                  >
-                    {f.label}
-                  </Label>
-                </div>
+                  <div className="flex-1 cursor-pointer text-sm font-medium">{f.label}</div>
+                </Label>
               ))}
             </RadioGroup>
           </div>
@@ -93,34 +95,14 @@ export function ReportOccurrenceScreen() {
             <Label>
               تاریخ وقوع <span className="text-destructive">*</span>
             </Label>
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start pr-10 text-right font-normal",
-                    !date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="text-muted-foreground ml-2 h-4 w-4 shrink-0" />
-                  {dateDisplay}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <DayPicker
-                  mode="single"
-                  locale={faIR}
-                  selected={date}
-                  onSelect={(d) => {
-                    setDate(d);
-                    if (d) setDatePopoverOpen(false);
-                  }}
-                  disabled={{ after: new Date() }}
-                  dir="rtl"
-                  className="rounded-md border-0"
-                />
-              </PopoverContent>
-            </Popover>
+            <DatePicker
+              defaultValue={date}
+              onChange={handleDateChange}
+              locale="fa"
+              direction="rtl"
+              position="right"
+              inputClass="border-input flex h-9 w-full items-center rounded-md border bg-transparent px-3 py-2 text-right text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
             <p className="text-muted-foreground text-xs">
               اگر تاریخ دقیق را نمی‌دانید، تاریخ تقریبی را وارد کنید (فقط تاریخ‌های گذشته و امروز)
             </p>
