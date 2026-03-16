@@ -26,11 +26,18 @@ export function WelcomeScreen() {
         <CardContent className="flex flex-col items-center gap-4">
           <img src="./hero.png" alt="دادبان" className="h-auto w-4/5 object-contain" />
 
+          <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50">
+            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+            <AlertDescription className="text-emerald-800 dark:text-emerald-200">
+              <span className="font-semibold">حریم خصوصی و امنیت شما:</span> ما هیچ داده‌ای از شما
+              ذخیره نمی‌کنیم. آدرس IP و اطلاعات شناسایی شما به هیچ عنوان ثبت نمی‌گردد، علاوه بر آن ما
+              متادیتای فایل‌های آپلود شده را قبل از ذخیره حذف می‌کنیم. در هر حال شدیدا توصیه می‌شود از
+              مرورگر tor استفاده کنید و توصیه‌های امنیتی را رعایت کنید.
+            </AlertDescription>
+          </Alert>
+
           {user ? (
             <>
-              <p className="text-muted-foreground mt-2 text-center text-sm font-medium">
-                به پنل کاربری خود وارد شوید
-              </p>
               <Button
                 asChild
                 className="w-full justify-center gap-3 py-6 text-base"
@@ -44,15 +51,6 @@ export function WelcomeScreen() {
             </>
           ) : (
             <>
-              <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50">
-                <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
-                <AlertDescription className="text-emerald-800 dark:text-emerald-200">
-                  <span className="font-semibold">حریم خصوصی و امنیت شما:</span> ما هیچ داده‌ای از
-                  شما ذخیره نمی‌کنیم. آدرس IP و اطلاعات شناسایی شما به هیچ عنوان ثبت نمی‌گردد، علاوه بر
-                  آن ما متادیتای فایل‌های آپلود شده را قبل از ذخیره حذف می‌کنیم. در هر حال شدیدا توصیه
-                  می‌شود از مرورگر tor استفاده کنید و توصیه‌های امنیتی را رعایت کنید.
-                </AlertDescription>
-              </Alert>
               <p className="text-muted-foreground mt-2 text-center text-sm font-medium">
                 برای شروع، لطفاً یکی از روش‌های زیر را انتخاب کنید
               </p>
