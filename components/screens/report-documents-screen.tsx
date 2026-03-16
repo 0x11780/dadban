@@ -83,7 +83,7 @@ export function ReportDocumentsScreen() {
                 >
                   metadata2go.com
                 </a>{" "}
-                استفاده کنید تا خودتان هم مطمئن شوید از پاک شدن متادیتا.
+                استفاده کنید تا خودتان نیز از پاک شدن متادیتا مطمئن شوید.
               </p>
             </AlertDescription>
           </Alert>
