@@ -130,19 +130,27 @@ model Category {
 }
 
 model Person {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   firstName    String
   lastName     String
+  fatherName   String?   // نام پدر
   nationalCode String?
   imageUrl     String?
-  title        String?
-  isFamous     Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  title        String?   // سمت
+  organization String?   // ارگان
+  dateOfBirth  DateTime?
+  address      String?
+  mobile       String?
+  phone        String?
+  isFamous     Boolean   @default(false)
+  status       String    @default("approved") // approved | pending - pending: در انتظار تایید ادمین
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   reports Report[]
 
   @@index([isFamous])
+  @@index([status])
   @@map("person")
 }
 

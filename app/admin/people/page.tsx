@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/edyen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,16 +24,29 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Eye, Clock } from "lucide-react";
+
+function detailValue(value?: string | null): string {
+  return value != null && value !== "" ? value : "نامشخص";
+}
 
 type Person = {
   id: string;
   firstName: string;
   lastName: string;
+  fatherName?: string | null;
   nationalCode?: string | null;
   imageUrl?: string | null;
   title?: string | null;
+  organization?: string | null;
+  dateOfBirth?: string | null;
+  address?: string | null;
+  mobile?: string | null;
+  phone?: string | null;
   isFamous: boolean;
+  status?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export default function AdminPeoplePage() {
@@ -41,13 +55,21 @@ export default function AdminPeoplePage() {
   const [famousOnly, setFamousOnly] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsPerson, setDetailsPerson] = useState<Person | null>(null);
   const [editing, setEditing] = useState<Person | null>(null);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
+    fatherName: "",
     nationalCode: "",
     imageUrl: "",
     title: "",
+    organization: "",
+    dateOfBirth: "",
+    address: "",
+    mobile: "",
+    phone: "",
     isFamous: false,
   });
 
@@ -70,9 +92,15 @@ export default function AdminPeoplePage() {
     setForm({
       firstName: "",
       lastName: "",
+      fatherName: "",
       nationalCode: "",
       imageUrl: "",
       title: "",
+      organization: "",
+      dateOfBirth: "",
+      address: "",
+      mobile: "",
+      phone: "",
       isFamous: false,
     });
     setDialogOpen(true);
@@ -83,9 +111,15 @@ export default function AdminPeoplePage() {
     setForm({
       firstName: p.firstName,
       lastName: p.lastName,
+      fatherName: p.fatherName ?? "",
       nationalCode: p.nationalCode ?? "",
       imageUrl: p.imageUrl ?? "",
       title: p.title ?? "",
+      organization: p.organization ?? "",
+      dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth).toISOString().slice(0, 10) : "",
+      address: p.address ?? "",
+      mobile: p.mobile ?? "",
+      phone: p.phone ?? "",
       isFamous: p.isFamous,
     });
     setDialogOpen(true);
@@ -93,24 +127,24 @@ export default function AdminPeoplePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const payload = {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      fatherName: form.fatherName || undefined,
+      nationalCode: form.nationalCode || undefined,
+      imageUrl: form.imageUrl || undefined,
+      title: form.title || undefined,
+      organization: form.organization || undefined,
+      dateOfBirth: form.dateOfBirth ? form.dateOfBirth : undefined,
+      address: form.address || undefined,
+      mobile: form.mobile || undefined,
+      phone: form.phone || undefined,
+      isFamous: form.isFamous,
+    };
     if (editing) {
-      await api.admin.people({ id: editing.id }).put({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        nationalCode: form.nationalCode || undefined,
-        imageUrl: form.imageUrl || undefined,
-        title: form.title || undefined,
-        isFamous: form.isFamous,
-      });
+      await api.admin.people({ id: editing.id }).put(payload);
     } else {
-      await api.admin.people.post({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        nationalCode: form.nationalCode || undefined,
-        imageUrl: form.imageUrl || undefined,
-        title: form.title || undefined,
-        isFamous: form.isFamous,
-      });
+      await api.admin.people.post(payload);
     }
     setDialogOpen(false);
     fetchPeople();
@@ -125,10 +159,18 @@ export default function AdminPeoplePage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">افراد</h1>
-        <Button onClick={openCreate}>
-          <Plus className="ml-2 h-4 w-4" />
-          افزودن
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/people/pending">
+              <Clock className="ml-2 h-4 w-4" />
+              در انتظار تایید
+            </Link>
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus className="ml-2 h-4 w-4" />
+            افزودن
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex gap-4">
@@ -193,9 +235,22 @@ export default function AdminPeoplePage() {
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setDetailsPerson(p);
+                        setDetailsOpen(true);
+                      }}
+                      title="مشاهده جزئیات"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(p)} title="ویرایش">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -203,8 +258,104 @@ export default function AdminPeoplePage() {
         </Table>
       )}
 
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>جزئیات شخص</DialogTitle>
+          </DialogHeader>
+          {detailsPerson && (
+            <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={detailsPerson.imageUrl ?? undefined} alt="" />
+                  <AvatarFallback className="text-lg">
+                    {detailsPerson.firstName[0]}
+                    {detailsPerson.lastName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <p className="text-lg font-semibold">
+                    {detailsPerson.firstName} {detailsPerson.lastName}
+                  </p>
+                  <Badge variant={detailsPerson.isFamous ? "default" : "secondary"}>
+                    {detailsPerson.isFamous ? "معروف" : "عادی"}
+                  </Badge>
+                  <Badge variant="outline" className="mr-2">
+                    {detailsPerson.status === "approved"
+                      ? "تأیید شده"
+                      : detailsPerson.status === "pending"
+                        ? "در انتظار"
+                        : (detailsPerson.status ?? "نامشخص")}
+                  </Badge>
+                </div>
+              </div>
+              <Table className="border-border [&_td]:border-border w-full border-collapse overflow-hidden rounded-lg border font-sans text-sm [&_td]:border [&_td]:px-4 [&_td]:py-3">
+                <TableBody>
+                  {[
+                    ["شناسه", detailValue(detailsPerson.id)],
+                    ["نام پدر", detailValue(detailsPerson.fatherName)],
+                    ["عنوان (سمت)", detailValue(detailsPerson.title)],
+                    ["کد ملی", detailValue(detailsPerson.nationalCode)],
+                    ["ارگان", detailValue(detailsPerson.organization)],
+                    [
+                      "تاریخ تولد",
+                      detailValue(
+                        detailsPerson.dateOfBirth
+                          ? new Date(detailsPerson.dateOfBirth).toLocaleDateString("fa-IR")
+                          : undefined,
+                      ),
+                    ],
+                    ["موبایل", detailValue(detailsPerson.mobile)],
+                    ["تلفن", detailValue(detailsPerson.phone)],
+                    ["آدرس", detailValue(detailsPerson.address)],
+                    ["لینک تصویر", detailValue(detailsPerson.imageUrl)],
+                    [
+                      "تاریخ ایجاد",
+                      detailValue(
+                        detailsPerson.createdAt
+                          ? new Date(detailsPerson.createdAt).toLocaleDateString("fa-IR")
+                          : undefined,
+                      ),
+                    ],
+                    [
+                      "تاریخ بروزرسانی",
+                      detailValue(
+                        detailsPerson.updatedAt
+                          ? new Date(detailsPerson.updatedAt).toLocaleDateString("fa-IR")
+                          : undefined,
+                      ),
+                    ],
+                  ].map(([label, value]) => (
+                    <TableRow key={label} className="hover:bg-transparent">
+                      <TableCell className="text-muted-foreground bg-muted/50 border-border w-48 min-w-36 border-r font-medium">
+                        {label}
+                      </TableCell>
+                      <TableCell className="text-foreground wrap-break-word">{value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+                  بستن
+                </Button>
+                <Button
+                  onClick={() => {
+                    setDetailsOpen(false);
+                    openEdit(detailsPerson);
+                  }}
+                >
+                  <Pencil className="ml-2 h-4 w-4" />
+                  ویرایش
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "ویرایش شخص" : "افزودن شخص"}</DialogTitle>
           </DialogHeader>
@@ -226,19 +377,64 @@ export default function AdminPeoplePage() {
                   required
                 />
               </div>
+              <div>
+                <Label>نام پدر</Label>
+                <Input
+                  value={form.fatherName}
+                  onChange={(e) => setForm((f) => ({ ...f, fatherName: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>عنوان (سمت)</Label>
+                <Input
+                  value={form.title}
+                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>کد ملی</Label>
+                <Input
+                  value={form.nationalCode}
+                  onChange={(e) => setForm((f) => ({ ...f, nationalCode: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>ارگان</Label>
+                <Input
+                  value={form.organization}
+                  onChange={(e) => setForm((f) => ({ ...f, organization: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>تاریخ تولد</Label>
+                <Input
+                  type="date"
+                  value={form.dateOfBirth}
+                  onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>موبایل</Label>
+                <Input
+                  value={form.mobile}
+                  onChange={(e) => setForm((f) => ({ ...f, mobile: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>تلفن</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+              </div>
             </div>
             <div>
-              <Label>عنوان (سمت)</Label>
+              <Label>آدرس</Label>
               <Input
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label>کد ملی</Label>
-              <Input
-                value={form.nationalCode}
-                onChange={(e) => setForm((f) => ({ ...f, nationalCode: e.target.value }))}
+                value={form.address}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
               />
             </div>
             <div>

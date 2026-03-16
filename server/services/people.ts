@@ -21,7 +21,7 @@ export const peopleService = new Elysia({ prefix: "/people", aot: false })
     async ({ query }) => {
       const search = query?.search?.trim();
       const people = await prisma.person.findMany({
-        where: { isFamous: true },
+        where: { isFamous: true, status: "approved" },
         orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
       });
       if (search) {
@@ -41,9 +41,17 @@ export const peopleService = new Elysia({ prefix: "/people", aot: false })
         data: {
           firstName: body.firstName,
           lastName: body.lastName,
+          fatherName: body.fatherName || undefined,
           nationalCode: body.nationalCode || undefined,
           imageUrl: body.imageUrl || undefined,
+          title: body.title || undefined,
+          organization: body.organization || undefined,
+          dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : undefined,
+          address: body.address || undefined,
+          mobile: body.mobile || undefined,
+          phone: body.phone || undefined,
           isFamous: false,
+          status: "pending",
         },
       });
       await createAuditLog({
@@ -59,8 +67,15 @@ export const peopleService = new Elysia({ prefix: "/people", aot: false })
       body: t.Object({
         firstName: t.String({ minLength: 1 }),
         lastName: t.String({ minLength: 1 }),
+        fatherName: t.Optional(t.String()),
         nationalCode: t.Optional(t.String()),
         imageUrl: t.Optional(t.String()),
+        title: t.Optional(t.String()),
+        organization: t.Optional(t.String()),
+        dateOfBirth: t.Optional(t.String()),
+        address: t.Optional(t.String()),
+        mobile: t.Optional(t.String()),
+        phone: t.Optional(t.String()),
       }),
     },
   );

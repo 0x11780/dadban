@@ -145,6 +145,10 @@ export interface ReportCase {
   description: string;
   status: RequestStatus;
   createdAt: Date;
+  /** Used in report wizard: آیا شخص خاصی دخیل است؟ */
+  hasInvolvedPerson?: boolean;
+  /** شخص انتخاب‌شده وقتی hasInvolvedPerson=true */
+  involvedPerson?: Person;
   categoryId?: string;
   subcategoryId?: string;
   category?: ReportCategory;

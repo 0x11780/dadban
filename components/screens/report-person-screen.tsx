@@ -57,9 +57,17 @@ export function ReportPersonScreen() {
   );
   const [showAddNew, setShowAddNew] = useState(false);
   const [showSimilarWarning, setShowSimilarWarning] = useState(false);
-  const [pendingAdd, setPendingAdd] = useState(false);
+  const [_pendingAdd, setPendingAdd] = useState(false);
   const [newPersonFirstName, setNewPersonFirstName] = useState("");
   const [newPersonLastName, setNewPersonLastName] = useState("");
+  const [newPersonFatherName, setNewPersonFatherName] = useState("");
+  const [newPersonOrganization, setNewPersonOrganization] = useState("");
+  const [newPersonTitle, setNewPersonTitle] = useState("");
+  const [newPersonDateOfBirth, setNewPersonDateOfBirth] = useState("");
+  const [newPersonNationalCode, setNewPersonNationalCode] = useState("");
+  const [newPersonAddress, setNewPersonAddress] = useState("");
+  const [newPersonMobile, setNewPersonMobile] = useState("");
+  const [newPersonPhone, setNewPersonPhone] = useState("");
   const [famousPeople, setFamousPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -100,16 +108,44 @@ export function ReportPersonScreen() {
     }
   };
 
+  const resetNewPersonForm = () => {
+    setNewPersonFirstName("");
+    setNewPersonLastName("");
+    setNewPersonFatherName("");
+    setNewPersonOrganization("");
+    setNewPersonTitle("");
+    setNewPersonDateOfBirth("");
+    setNewPersonNationalCode("");
+    setNewPersonAddress("");
+    setNewPersonMobile("");
+    setNewPersonPhone("");
+  };
+
   const performAddPerson = async () => {
     if (!newPersonFirstName || !newPersonLastName) return;
     try {
       const { data, error } = await api.people.post({
-        firstName: newPersonFirstName,
-        lastName: newPersonLastName,
+        firstName: newPersonFirstName.trim(),
+        lastName: newPersonLastName.trim(),
+        fatherName: newPersonFatherName.trim() || undefined,
+        organization: newPersonOrganization.trim() || undefined,
+        title: newPersonTitle.trim() || undefined,
+        dateOfBirth: newPersonDateOfBirth || undefined,
+        nationalCode: newPersonNationalCode.trim() || undefined,
+        address: newPersonAddress.trim() || undefined,
+        mobile: newPersonMobile.trim() || undefined,
+        phone: newPersonPhone.trim() || undefined,
       });
       if (error) throw new Error(String(error));
       if (data) {
-        const newPerson: Person = { ...data, isFamous: false };
+        const newPerson: Person = {
+          id: data.id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          nationalCode: data.nationalCode ?? undefined,
+          imageUrl: data.imageUrl ?? undefined,
+          isFamous: false,
+        };
         setSelectedPerson(newPerson);
         setShowAddNew(false);
         setShowSimilarWarning(false);
@@ -302,47 +338,118 @@ export function ReportPersonScreen() {
             open={showAddNew}
             onOpenChange={(open) => {
               setShowAddNew(open);
-              if (!open) {
-                setNewPersonFirstName("");
-                setNewPersonLastName("");
-              }
+              if (!open) resetNewPersonForm();
             }}
           >
-            <DialogContent>
-              <DialogHeader>
+            <DialogContent scrollable>
+              <DialogHeader className="shrink-0">
                 <DialogTitle>افزودن شخص جدید</DialogTitle>
               </DialogHeader>
-              <Alert size="sm" variant="default" className="border-amber-200 bg-amber-50">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
-                  لطفا ابتدا از موجود نبودن شخص در لیست افراد معروف مطمئن شوید.
-                </AlertDescription>
-              </Alert>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="modal-firstName">
-                    نام <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="modal-firstName"
-                    value={newPersonFirstName}
-                    onChange={(e) => setNewPersonFirstName(e.target.value)}
-                    placeholder="نام شخص..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="modal-lastName">
-                    نام خانوادگی <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="modal-lastName"
-                    value={newPersonLastName}
-                    onChange={(e) => setNewPersonLastName(e.target.value)}
-                    placeholder="نام خانوادگی شخص..."
-                  />
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Alert size="sm" variant="default" className="border-amber-200 bg-amber-50">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    لطفا ابتدا از موجود نبودن شخص در لیست افراد معروف مطمئن شوید.
+                  </AlertDescription>
+                </Alert>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-firstName">
+                      نام <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="modal-firstName"
+                      value={newPersonFirstName}
+                      onChange={(e) => setNewPersonFirstName(e.target.value)}
+                      placeholder="نام شخص..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-lastName">
+                      نام خانوادگی <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="modal-lastName"
+                      value={newPersonLastName}
+                      onChange={(e) => setNewPersonLastName(e.target.value)}
+                      placeholder="نام خانوادگی شخص..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-fatherName">نام پدر</Label>
+                    <Input
+                      id="modal-fatherName"
+                      value={newPersonFatherName}
+                      onChange={(e) => setNewPersonFatherName(e.target.value)}
+                      placeholder="نام پدر..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-organization">ارگان</Label>
+                    <Input
+                      id="modal-organization"
+                      value={newPersonOrganization}
+                      onChange={(e) => setNewPersonOrganization(e.target.value)}
+                      placeholder="ارگان..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-title">سمت</Label>
+                    <Input
+                      id="modal-title"
+                      value={newPersonTitle}
+                      onChange={(e) => setNewPersonTitle(e.target.value)}
+                      placeholder="سمت..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-dateOfBirth">تاریخ تولد</Label>
+                    <Input
+                      id="modal-dateOfBirth"
+                      type="date"
+                      value={newPersonDateOfBirth}
+                      onChange={(e) => setNewPersonDateOfBirth(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-nationalCode">کد ملی</Label>
+                    <Input
+                      id="modal-nationalCode"
+                      value={newPersonNationalCode}
+                      onChange={(e) => setNewPersonNationalCode(e.target.value)}
+                      placeholder="کد ملی..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-address">آدرس</Label>
+                    <Input
+                      id="modal-address"
+                      value={newPersonAddress}
+                      onChange={(e) => setNewPersonAddress(e.target.value)}
+                      placeholder="آدرس..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-mobile">شماره موبایل</Label>
+                    <Input
+                      id="modal-mobile"
+                      value={newPersonMobile}
+                      onChange={(e) => setNewPersonMobile(e.target.value)}
+                      placeholder="شماره موبایل..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-phone">شماره تلفن</Label>
+                    <Input
+                      id="modal-phone"
+                      value={newPersonPhone}
+                      onChange={(e) => setNewPersonPhone(e.target.value)}
+                      placeholder="شماره تلفن..."
+                    />
+                  </div>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="shrink-0">
                 <Button type="button" variant="outline" onClick={() => setShowAddNew(false)}>
                   انصراف
                 </Button>

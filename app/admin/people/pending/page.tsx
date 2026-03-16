@@ -1,0 +1,421 @@
+"use client";
+
+import { Fragment, useEffect, useState } from "react";
+import Link from "next/link";
+import { api } from "@/lib/edyen";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ArrowRight, ChevronRight, Check, X, Merge, Search } from "lucide-react";
+
+type PendingPerson = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fatherName?: string | null;
+  nationalCode?: string | null;
+  imageUrl?: string | null;
+  title?: string | null;
+  organization?: string | null;
+  dateOfBirth?: string | null;
+  address?: string | null;
+  mobile?: string | null;
+  phone?: string | null;
+  status: string;
+  createdAt: string;
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  firstName: "نام",
+  lastName: "نام خانوادگی",
+  fatherName: "نام پدر",
+  nationalCode: "کد ملی",
+  title: "سمت",
+  organization: "ارگان",
+  dateOfBirth: "تاریخ تولد",
+  address: "آدرس",
+  mobile: "شماره موبایل",
+  phone: "شماره تلفن",
+  imageUrl: "لینک تصویر",
+};
+
+function formatDate(d: string | null | undefined) {
+  if (!d) return "—";
+  const date = new Date(d);
+  return date.toLocaleDateString("fa-IR");
+}
+
+export default function AdminPendingPeoplePage() {
+  const [pending, setPending] = useState<PendingPerson[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<PendingPerson | null>(null);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeSearch, setMergeSearch] = useState("");
+  const [mergeResults, setMergeResults] = useState<PendingPerson[]>([]);
+  const [mergeTarget, setMergeTarget] = useState<PendingPerson | null>(null);
+  const [mergedFields, setMergedFields] = useState<Record<string, string>>({});
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const fetchPending = async () => {
+    setLoading(true);
+    const params: Record<string, string> = {};
+    if (search) params.search = search;
+    const { data } = await api.admin.people.pending.get(params);
+    setPending((data?.data as PendingPerson[]) ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPending();
+  }, [search]);
+
+  const openDetails = (p: PendingPerson) => {
+    setSelectedPerson(p);
+    setDetailsOpen(true);
+  };
+
+  const closeDetails = () => {
+    setDetailsOpen(false);
+    setSelectedPerson(null);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedPerson) return;
+    setActionLoading(true);
+    try {
+      await api.admin.people({ id: selectedPerson.id }).approve.put();
+      closeDetails();
+      fetchPending();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedPerson) return;
+    if (!confirm("آیا از حذف این شخص اطمینان دارید؟")) return;
+    setActionLoading(true);
+    try {
+      await api.admin.people({ id: selectedPerson.id }).reject.put();
+      closeDetails();
+      fetchPending();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openMerge = () => {
+    setMergeOpen(true);
+    setMergeSearch("");
+    setMergeResults([]);
+    setMergeTarget(null);
+    setMergedFields({});
+  };
+
+  const searchExistingPerson = async () => {
+    if (!mergeSearch.trim()) return;
+    const { data } = await api.admin.people.get({ search: mergeSearch.trim() });
+    const list = (data?.data ?? []) as PendingPerson[];
+    setMergeResults(list.filter((p) => p.id !== selectedPerson?.id));
+  };
+
+  const selectMergeTarget = (p: PendingPerson) => {
+    setMergeTarget(p);
+    const fields: Record<string, string> = {};
+    const editable = [
+      "firstName",
+      "lastName",
+      "fatherName",
+      "nationalCode",
+      "title",
+      "organization",
+      "dateOfBirth",
+      "address",
+      "mobile",
+      "phone",
+      "imageUrl",
+    ];
+    for (const key of editable) {
+      const newVal = (selectedPerson as Record<string, unknown>)?.[key];
+      const oldVal = (p as Record<string, unknown>)?.[key];
+      fields[key] =
+        (newVal != null && String(newVal).trim()
+          ? String(newVal)
+          : oldVal != null
+            ? String(oldVal)
+            : "") ?? "";
+    }
+    setMergedFields(fields);
+  };
+
+  const setMergedField = (key: string, value: string) => {
+    setMergedFields((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleMergeSave = async () => {
+    if (!selectedPerson || !mergeTarget) return;
+    setActionLoading(true);
+    try {
+      const body: Record<string, string | undefined> = {
+        targetPersonId: mergeTarget.id,
+      };
+      for (const [k, v] of Object.entries(mergedFields)) {
+        if (v?.trim()) body[k] = v.trim();
+      }
+      if (body.dateOfBirth) {
+        const d = new Date(body.dateOfBirth);
+        if (!isNaN(d.getTime())) body.dateOfBirth = d.toISOString();
+      }
+      await api.admin.people({ id: selectedPerson.id }).merge.post(body);
+      setMergeOpen(false);
+      closeDetails();
+      fetchPending();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/admin/people">
+              <ChevronRight className="ml-1 h-4 w-4" />
+              بازگشت
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold">اشخاص در انتظار تایید</h1>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <Input
+          placeholder="جستجو (نام، نام خانوادگی، کد ملی)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-xs"
+        />
+      </div>
+
+      {loading ? (
+        <p>در حال بارگذاری...</p>
+      ) : pending.length === 0 ? (
+        <p className="text-muted-foreground">شخصی در انتظار تایید نیست.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>آواتار</TableHead>
+              <TableHead>نام</TableHead>
+              <TableHead>نام خانوادگی</TableHead>
+              <TableHead>تاریخ افزودن</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pending.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <Avatar>
+                    <AvatarImage src={p.imageUrl ?? undefined} alt={p.firstName} />
+                    <AvatarFallback>
+                      {p.firstName[0]}
+                      {p.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                </TableCell>
+                <TableCell>{p.firstName}</TableCell>
+                <TableCell>{p.lastName}</TableCell>
+                <TableCell>{formatDate(p.createdAt)}</TableCell>
+                <TableCell>
+                  <Button variant="outline" size="sm" onClick={() => openDetails(p)}>
+                    جزئیات
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+
+      {/* Details Modal */}
+      <Dialog open={detailsOpen} onOpenChange={(open) => !open && closeDetails()}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>جزئیات شخص در انتظار تایید</DialogTitle>
+          </DialogHeader>
+          {selectedPerson && (
+            <div className="space-y-2 py-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">نام:</span> {selectedPerson.firstName}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">نام خانوادگی:</span>{" "}
+                  {selectedPerson.lastName}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">نام پدر:</span>{" "}
+                  {selectedPerson.fatherName ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">کد ملی:</span>{" "}
+                  {selectedPerson.nationalCode ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">سمت:</span> {selectedPerson.title ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">ارگان:</span>{" "}
+                  {selectedPerson.organization ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">تاریخ تولد:</span>{" "}
+                  {formatDate(selectedPerson.dateOfBirth)}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">آدرس:</span>{" "}
+                  {selectedPerson.address ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">موبایل:</span>{" "}
+                  {selectedPerson.mobile ?? "—"}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">تلفن:</span> {selectedPerson.phone ?? "—"}
+                </div>
+              </div>
+              <DialogFooter className="gap-2 pt-4">
+                <Button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="ml-2 h-4 w-4" />
+                  تایید
+                </Button>
+                <Button variant="destructive" onClick={handleReject} disabled={actionLoading}>
+                  <X className="ml-2 h-4 w-4" />
+                  رد
+                </Button>
+                <Button variant="outline" onClick={openMerge} disabled={actionLoading}>
+                  <Merge className="ml-2 h-4 w-4" />
+                  مرج با شخص موجود
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Merge Modal */}
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>مرج با شخص موجود</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="جستجوی شخص موجود (نام یا نام خانوادگی)..."
+                value={mergeSearch}
+                onChange={(e) => setMergeSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchExistingPerson()}
+              />
+              <Button onClick={searchExistingPerson}>
+                <Search className="ml-2 h-4 w-4" />
+                جستجو
+              </Button>
+            </div>
+
+            {mergeResults.length > 0 && !mergeTarget && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">انتخاب شخص:</p>
+                <div className="max-h-40 space-y-1 overflow-y-auto rounded border p-2">
+                  {mergeResults.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => selectMergeTarget(p)}
+                      className="bg-muted/50 hover:bg-muted flex w-full items-center justify-between rounded p-2 text-start"
+                    >
+                      <span>
+                        {p.firstName} {p.lastName}
+                        {p.nationalCode && ` - ${p.nationalCode}`}
+                      </span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {mergeTarget && selectedPerson && (
+              <div className="space-y-4">
+                <p className="text-sm font-medium">
+                  انتخاب مقدار نهایی هر فیلد (فلش از جدید به قبلی):
+                </p>
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-sm">
+                  <div className="text-muted-foreground font-medium">کاربر جدید</div>
+                  <div />
+                  <div className="text-muted-foreground font-medium">کاربر موجود (نتیجه)</div>
+                  {Object.entries(FIELD_LABELS).map(([key, label]) => {
+                    const newVal = (selectedPerson as Record<string, unknown>)?.[key];
+                    const oldVal = (mergeTarget as Record<string, unknown>)?.[key];
+                    const newStr = newVal != null ? String(newVal) : "";
+                    const oldStr = oldVal != null ? String(oldVal) : "";
+                    const current = mergedFields[key] ?? "";
+                    return (
+                      <Fragment key={key}>
+                        <div className="bg-muted/30 rounded border p-2 text-xs">
+                          {newStr || "—"}
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <ArrowRight className="text-primary h-4 w-4" />
+                        </div>
+                        <div className="rounded border p-2">
+                          <Input
+                            value={current}
+                            onChange={(e) => setMergedField(key, e.target.value)}
+                            placeholder={oldStr || "خالی"}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </Fragment>
+                    );
+                  })}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setMergeTarget(null)}>
+                    بازگشت به انتخاب
+                  </Button>
+                  <Button onClick={handleMergeSave} disabled={actionLoading}>
+                    ذخیره مرج
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
