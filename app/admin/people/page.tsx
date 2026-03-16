@@ -55,6 +55,7 @@ export default function AdminPeoplePage() {
   const [search, setSearch] = useState("");
   const [famousOnly, setFamousOnly] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsPerson, setDetailsPerson] = useState<Person | null>(null);
@@ -84,9 +85,19 @@ export default function AdminPeoplePage() {
     setLoading(false);
   };
 
+  const fetchPendingCount = async () => {
+    const { data } = await api.admin.people.pending.get({});
+    const list = (data?.data ?? []) as unknown[];
+    setPendingCount(list.length);
+  };
+
   useEffect(() => {
     fetchPeople();
   }, [search, famousOnly]);
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, []);
 
   const openCreate = () => {
     setEditing(null);
@@ -160,15 +171,20 @@ export default function AdminPeoplePage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">افراد</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/admin/people/pending">
-              <Clock className="ml-2 h-4 w-4" />
-              در انتظار تایید
-            </Link>
-          </Button>
+        <div className="flex gap-1">
+          {pendingCount > 0 && (
+            <Button variant="outline" asChild className="relative">
+              <Link href="/admin/people/pending" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                در انتظار تایید
+                <Badge variant="destructive" className="mr-1 min-w-5 px-1.5 py-0 text-[10px]">
+                  {pendingCount}
+                </Badge>
+              </Link>
+            </Button>
+          )}
           <Button onClick={openCreate}>
-            <Plus className="ml-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             افزودن
           </Button>
         </div>
