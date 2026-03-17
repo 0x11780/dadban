@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "./providers";
+import { TorBanner } from "@/components/tor-banner";
 import "./globals.css";
 
 const vazirmatn = Vazirmatn({
@@ -47,6 +48,7 @@ export default function RootLayout({
           <link rel="manifest" href="/site.webmanifest" />
         </head>
         <body className={`${vazirmatn.variable} font-sans antialiased`}>
+          <TorBanner />
           {children}
           <Analytics />
         </body>
