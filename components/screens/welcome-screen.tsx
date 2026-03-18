@@ -17,14 +17,16 @@ export function WelcomeScreen() {
       {/* Main card */}
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-foreground text-2xl font-black">به دادبان خوش آمدید</CardTitle>
+          <CardTitle className="text-foreground text-2xl font-black">
+            به دادنگار خوش آمدید
+          </CardTitle>
           <CardDescription className="mt-2 text-xs">
-            دادبان یک سرویس آزاد و ناشناس است که به شما امکان می‌دهد بدون نیاز به ورود و ثبت نام،
+            دادنگار یک سرویس آزاد و ناشناس است که به شما امکان می‌دهد بدون نیاز به ورود و ثبت نام،
             گزارش‌های خود را ثبت کنید.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
-          <img src="./hero.png" alt="دادبان" className="h-auto w-4/5 object-contain" />
+          <img src="./hero.png" alt="دادنگار" className="h-auto w-4/5 object-contain" />
 
           <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50">
             <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />

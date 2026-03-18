@@ -17,6 +17,7 @@
     "prisma:migrate:dev": "pnpm exec prisma migrate dev",
     "prisma:seed": "pnpm exec prisma db seed",
     "prisma:studio": "pnpm exec prisma studio",
+    "worker": "tsx workers/index.ts",
     "start": "next start"
   },
   "lint-staged": {
@@ -68,6 +69,7 @@
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
+    "dayjs": "^1.11.20",
     "dotenv": "^17.3.1",
     "elysia": "^1.2.25",
     "elysia-ip": "^1.0.10",
@@ -76,7 +78,8 @@
     "embla-carousel-react": "8.6.0",
     "exif-be-gone": "^1.5.1",
     "file-type": "^21.3.2",
-    "inngest": "^4.0.0",
+    "amqplib": "^0.10.4",
+    "node-cron": "^3.0.3",
     "input-otp": "1.4.2",
     "lucide-react": "^0.564.0",
     "minio": "^8.0.7",
@@ -95,6 +98,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.4",
+    "@types/node-cron": "^3.0.11",
     "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^22",
     "@types/react": "19.2.14",

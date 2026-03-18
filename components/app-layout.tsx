@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
-import { api, DADBAN_INVITE_TOKEN_KEY, setInviteTokenStorage } from "@/lib/edyen";
+import { api, daadnegar_INVITE_TOKEN_KEY, setInviteTokenStorage } from "@/lib/edyen";
 
 const ChevronDown = () => (
   <svg
@@ -56,8 +56,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   // نمایش toast خروج بعد از ریدایرکت (full page load)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem("dadban_logout_toast")) {
-      sessionStorage.removeItem("dadban_logout_toast");
+    if (sessionStorage.getItem("daadnegar_logout_toast")) {
+      sessionStorage.removeItem("daadnegar_logout_toast");
       toast("با موفقیت خارج شدید!");
     }
   }, []);
@@ -65,7 +65,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   // Sync invite token from localStorage to cookie (for middleware) when token exists
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const token = localStorage.getItem(DADBAN_INVITE_TOKEN_KEY);
+    const token = localStorage.getItem(daadnegar_INVITE_TOKEN_KEY);
     if (token) setInviteTokenStorage(token);
   }, []);
 
@@ -74,7 +74,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (user) return;
     const hasAuth =
       typeof window !== "undefined" &&
-      (localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) || document.cookie.includes("better-auth"));
+      (localStorage.getItem(daadnegar_INVITE_TOKEN_KEY) || document.cookie.includes("better-auth"));
     if (!hasAuth) return;
     let cancelled = false;
     api.me.get().then(({ data, error }) => {
@@ -102,8 +102,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
         <div className="container flex h-14 items-center justify-between px-4">
           <Link href={routes.home} className="flex items-center gap-2">
-            <Image src="/logo.png" alt="دادبان" width={36} height={36} className="h-9 w-9" />
-            <span className="text-foreground text-lg font-bold">دادبان</span>
+            <Image src="/logo.png" alt="دادنگار" width={36} height={36} className="h-9 w-9" />
+            <span className="text-foreground text-lg font-bold">دادنگار</span>
           </Link>
           {user ? (
             <DropdownMenu>
@@ -208,7 +208,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         <div className="text-muted-foreground/70 container mx-auto mb-2 text-center text-xs">
           <p>
-            © {new Date().getFullYear()} دادبان — ما اینجا هستیم تا مطمئن شویم هیچ‌کس از عدالت فرار
+            © {new Date().getFullYear()} دادنگار — ما اینجا هستیم تا مطمئن شویم هیچ‌کس از عدالت فرار
             نمی‌کند
           </p>
         </div>

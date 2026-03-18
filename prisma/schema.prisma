@@ -95,7 +95,7 @@ model Verification {
   updatedAt  DateTime @updatedAt
 }
 
-// --- Dadban domain models ---
+// --- daadnegar domain models ---
 
 model Admin {
   id        String   @id @default(cuid())

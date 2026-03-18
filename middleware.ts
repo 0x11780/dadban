@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { DADBAN_INVITE_TOKEN_COOKIE } from "@/lib/edyen";
+import { daadnegar_INVITE_TOKEN_COOKIE } from "@/lib/edyen";
 
 export const config = {
   matcher: ["/admin", "/admin/:path*", "/panel", "/panel/:path*"],
@@ -8,7 +8,7 @@ export const config = {
 
 function getInviteTokenFromCookie(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`(?:^|; )${DADBAN_INVITE_TOKEN_COOKIE}=([^;]*)`));
+  const match = cookieHeader.match(new RegExp(`(?:^|; )${daadnegar_INVITE_TOKEN_COOKIE}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
 

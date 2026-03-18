@@ -2,7 +2,7 @@ import { Elysia, t } from "elysia";
 import { prisma } from "../db";
 import { createAuditLog } from "./audit";
 import { auth } from "@/lib/auth";
-import { inngest } from "@/inngest/client";
+import { publishReportSubmitted } from "@/lib/rabbitmq";
 import { resolveInviteToken } from "../lib/auth-invite";
 import { getSettingBool, getSettingNumber, SETTING_KEYS } from "../lib/settings";
 import { documentToServeUrl } from "./upload";
@@ -98,13 +98,9 @@ export const reportsService = new Elysia({ prefix: "/reports", aot: false })
           userAgent: request.headers.get("user-agent") ?? undefined,
         },
       });
-      try {
-        await inngest.send({
-          name: "app/report.submitted",
-          data: { reportId: report.id },
-        });
-      } catch (err) {
-        console.error("[reports] Failed to enqueue report for assignment:", err);
+      const enqueued = await publishReportSubmitted(report.id);
+      if (!enqueued) {
+        console.error("[reports] Failed to enqueue report for assignment (RabbitMQ may be down)");
       }
       const isInviteUser =
         reportCountBefore === 0 &&

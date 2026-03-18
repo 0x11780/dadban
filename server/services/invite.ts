@@ -108,7 +108,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
         await getSettingNumber(SETTING_KEYS.DEFAULT_TOKENS_NEW_USER),
       );
 
-      const email = `invite-${session.id}@dadban.local`;
+      const email = `invite-${session.id}@daadnegar.local`;
       const user = await prisma.$transaction(async (tx) => {
         const u = await tx.user.create({
           data: {
@@ -337,7 +337,7 @@ export const inviteService = new Elysia({ prefix: "/invite", aot: false })
           registerLink,
           code,
         });
-        // TODO: await sendEmail({ to: invitedEmail, subject: 'دعوت به دادبان', body: `لینک ثبت‌نام: ${registerLink}\nکد دعوت: ${code}` });
+        // TODO: await sendEmail({ to: invitedEmail, subject: 'دعوت به دادنگار', body: `لینک ثبت‌نام: ${registerLink}\nکد دعوت: ${code}` });
       }
 
       return {

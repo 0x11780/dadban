@@ -1,0 +1,14 @@
+name: ✨ Feature Request
+
+description: Suggest an feature or idea that you would like to see in Daadnegar
+
+title: "[Feature] <title>"
+labels: [enhancement, v4, needs triage]
+
+body:
+  - type: textarea
+    attributes:
+      label: Feature Description
+      description: A concise description of what feature you would like to see in Daadnegar.
+    validations:
+      required: true

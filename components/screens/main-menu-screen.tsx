@@ -66,7 +66,7 @@ export function MainMenuScreen() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-foreground text-2xl font-black">پنل کاربری</CardTitle>
-          <p className="text-muted-foreground mt-2">به پلتفرم دادبان خوش آمدید</p>
+          <p className="text-muted-foreground mt-2">به پلتفرم دادنگار خوش آمدید</p>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button

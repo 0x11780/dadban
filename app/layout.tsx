@@ -11,8 +11,8 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "پلتفرم گزارش امن دادبان",
-  description: "سیستم گزارش‌دهی دادبان",
+  title: "پلتفرم گزارش امن دادنگار",
+  description: "سیستم گزارش‌دهی دادنگار",
   generator: "v0.app",
   icons: {
     icon: [

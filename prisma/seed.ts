@@ -6,9 +6,9 @@ import { hashPassword } from "better-auth/crypto";
 const adapter = new PrismaMariaDb({
   host: process.env.DATABASE_HOST || "127.0.0.1",
   port: Number(process.env.DATABASE_PORT) || 3307,
-  user: process.env.DATABASE_USER || "dadban",
-  password: process.env.DATABASE_PASSWORD || "dadban_secret",
-  database: process.env.DATABASE_NAME || "dadban",
+  user: process.env.DATABASE_USER || "daadnegar",
+  password: process.env.DATABASE_PASSWORD || "daadnegar_secret",
+  database: process.env.DATABASE_NAME || "daadnegar",
   connectionLimit: 5,
 });
 
@@ -19,7 +19,12 @@ const FIRST_USER_NAME = process.env.SEED_FIRST_USER_NAME || "Admin";
 const FIRST_USER_PASSWORD = process.env.SEED_FIRST_USER_PASSWORD || "Admin123!";
 
 const FAMOUS_PEOPLE = [
-  { firstName: "علی", lastName: "خامنه‌ای", nationalCode: "0011223344", title: "رهبر جمهوری اسلامی" },
+  {
+    firstName: "علی",
+    lastName: "خامنه‌ای",
+    nationalCode: "0011223344",
+    title: "رهبر جمهوری اسلامی",
+  },
   {
     firstName: "روح‌الله",
     lastName: "خمینی",
@@ -32,32 +37,72 @@ const FAMOUS_PEOPLE = [
     nationalCode: "0011223346",
     title: "رئیس‌جمهور سابق",
   },
-  { firstName: "محمد", lastName: "خاتمی", nationalCode: "0011223347", title: "رئیس‌جمهور سابق" },
+  {
+    firstName: "محمد",
+    lastName: "خاتمی",
+    nationalCode: "0011223347",
+    title: "رئیس‌جمهور سابق",
+  },
   {
     firstName: "محمود",
     lastName: "احمدی‌نژاد",
     nationalCode: "0011223348",
     title: "رئیس‌جمهور سابق",
   },
-  { firstName: "حسن", lastName: "روحانی", nationalCode: "0011223349", title: "رئیس‌جمهور سابق" },
-  { firstName: "ابراهیم", lastName: "رئیسی", nationalCode: "0011223350", title: "رئیس‌جمهور سابق" },
-  { firstName: "مسعود", lastName: "پزشکیان", nationalCode: "0011223351", title: "رئیس‌جمهور" },
+  {
+    firstName: "حسن",
+    lastName: "روحانی",
+    nationalCode: "0011223349",
+    title: "رئیس‌جمهور سابق",
+  },
+  {
+    firstName: "ابراهیم",
+    lastName: "رئیسی",
+    nationalCode: "0011223350",
+    title: "رئیس‌جمهور سابق",
+  },
+  {
+    firstName: "مسعود",
+    lastName: "پزشکیان",
+    nationalCode: "0011223351",
+    title: "رئیس‌جمهور",
+  },
   {
     firstName: "محمدجواد",
     lastName: "ظریف",
     nationalCode: "0011223352",
     title: "وزیر امور خارجه سابق",
   },
-  { firstName: "علی", lastName: "لاریجانی", nationalCode: "0011223353", title: "رئیس سابق مجلس" },
-  { firstName: "محمدباقر", lastName: "قالیباف", nationalCode: "0011223354", title: "رئیس مجلس" },
+  {
+    firstName: "علی",
+    lastName: "لاریجانی",
+    nationalCode: "0011223353",
+    title: "رئیس سابق مجلس",
+  },
+  {
+    firstName: "محمدباقر",
+    lastName: "قالیباف",
+    nationalCode: "0011223354",
+    title: "رئیس مجلس",
+  },
   {
     firstName: "سعید",
     lastName: "جلیلی",
     nationalCode: "0011223355",
     title: "مذاکره‌کننده سابق هسته‌ای",
   },
-  { firstName: "محسن", lastName: "رضایی", nationalCode: "0011223356", title: "فرمانده سابق سپاه" },
-  { firstName: "احمد", lastName: "جنتی", nationalCode: "0011223357", title: "دبیر شورای نگهبان" },
+  {
+    firstName: "محسن",
+    lastName: "رضایی",
+    nationalCode: "0011223356",
+    title: "فرمانده سابق سپاه",
+  },
+  {
+    firstName: "احمد",
+    lastName: "جنتی",
+    nationalCode: "0011223357",
+    title: "دبیر شورای نگهبان",
+  },
   {
     firstName: "مجتبی",
     lastName: "خامنه‌ای",
@@ -100,41 +145,111 @@ const REPORT_CATEGORIES = [
       { slug: "threat", name: "تهدید و ارعاب" },
     ],
   },
-  { slug: "other", name: "سایر", subcategories: [{ slug: "other", name: "موارد دیگر" }] },
+  {
+    slug: "other",
+    name: "سایر",
+    subcategories: [{ slug: "other", name: "موارد دیگر" }],
+  },
 ];
 
 const IRAN_PROVINCES_AND_CITIES: { province: string; cities: string[] }[] = [
-  { province: "تهران", cities: ["تهران", "اسلامشهر", "پاکدشت", "شهریار", "ورامین", "رباط‌کریم"] },
-  { province: "اصفهان", cities: ["اصفهان", "کاشان", "نجف‌آباد", "خمینی‌شهر", "شاهین‌شهر"] },
+  {
+    province: "تهران",
+    cities: ["تهران", "اسلامشهر", "پاکدشت", "شهریار", "ورامین", "رباط‌کریم"],
+  },
+  {
+    province: "اصفهان",
+    cities: ["اصفهان", "کاشان", "نجف‌آباد", "خمینی‌شهر", "شاهین‌شهر"],
+  },
   { province: "فارس", cities: ["شیراز", "مرودشت", "جهرم", "کازرون", "آباده"] },
-  { province: "خراسان رضوی", cities: ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان"] },
-  { province: "خوزستان", cities: ["اهواز", "دزفول", "آبادان", "خرمشهر", "اندیمشک"] },
-  { province: "آذربایجان شرقی", cities: ["تبریز", "مراغه", "مرند", "میانه", "بناب"] },
-  { province: "آذربایجان غربی", cities: ["ارومیه", "خوی", "مهاباد", "سلماس", "بوکان"] },
-  { province: "مازندران", cities: ["ساری", "بابل", "آمل", "قائم‌شهر", "تنکابن"] },
+  {
+    province: "خراسان رضوی",
+    cities: ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان"],
+  },
+  {
+    province: "خوزستان",
+    cities: ["اهواز", "دزفول", "آبادان", "خرمشهر", "اندیمشک"],
+  },
+  {
+    province: "آذربایجان شرقی",
+    cities: ["تبریز", "مراغه", "مرند", "میانه", "بناب"],
+  },
+  {
+    province: "آذربایجان غربی",
+    cities: ["ارومیه", "خوی", "مهاباد", "سلماس", "بوکان"],
+  },
+  {
+    province: "مازندران",
+    cities: ["ساری", "بابل", "آمل", "قائم‌شهر", "تنکابن"],
+  },
   { province: "گیلان", cities: ["رشت", "انزلی", "لاهیجان", "لنگرود", "رودسر"] },
   { province: "البرز", cities: ["کرج", "هشتگرد", "نظرآباد", "طالقان"] },
   { province: "قم", cities: ["قم"] },
   { province: "مرکزی", cities: ["اراک", "ساوه", "خمین", "محلات", "دلیجان"] },
   { province: "یزد", cities: ["یزد", "مهریز", "اردکان", "میبد", "بافق"] },
-  { province: "کرمان", cities: ["کرمان", "رفسنجان", "سیرجان", "بردسیر", "جیرفت"] },
-  { province: "همدان", cities: ["همدان", "ملایر", "نهاوند", "تویسرکان", "کبودرآهنگ"] },
+  {
+    province: "کرمان",
+    cities: ["کرمان", "رفسنجان", "سیرجان", "بردسیر", "جیرفت"],
+  },
+  {
+    province: "همدان",
+    cities: ["همدان", "ملایر", "نهاوند", "تویسرکان", "کبودرآهنگ"],
+  },
   { province: "کردستان", cities: ["سنندج", "مریوان", "سقز", "بانه", "قروه"] },
-  { province: "زنجان", cities: ["زنجان", "ابهر", "خدابنده", "قیدار", "ماهنشان"] },
-  { province: "لرستان", cities: ["خرم‌آباد", "بروجرد", "دورود", "ازنا", "الیگودرز"] },
+  {
+    province: "زنجان",
+    cities: ["زنجان", "ابهر", "خدابنده", "قیدار", "ماهنشان"],
+  },
+  {
+    province: "لرستان",
+    cities: ["خرم‌آباد", "بروجرد", "دورود", "ازنا", "الیگودرز"],
+  },
   { province: "قزوین", cities: ["قزوین", "تاکستان", "آبیک", "بوئین‌زهرا"] },
-  { province: "اردبیل", cities: ["اردبیل", "خلخال", "مشگین‌شهر", "پارس‌آباد", "نیر"] },
+  {
+    province: "اردبیل",
+    cities: ["اردبیل", "خلخال", "مشگین‌شهر", "پارس‌آباد", "نیر"],
+  },
   { province: "بوشهر", cities: ["بوشهر", "برازجان", "گناوه", "دیر", "کنگان"] },
-  { province: "سمنان", cities: ["سمنان", "شاهرود", "دامغان", "گرمسار", "مهدی‌شهر"] },
-  { province: "گلستان", cities: ["گرگان", "گنبد کاووس", "علی‌آباد", "آق‌قلا", "کردکوی"] },
-  { province: "سیستان و بلوچستان", cities: ["زاهدان", "زابل", "چابهار", "ایرانشهر", "سراوان"] },
-  { province: "کرمانشاه", cities: ["کرمانشاه", "اسلام‌آباد", "پاوه", "سنقر", "هرسین"] },
-  { province: "هرمزگان", cities: ["بندرعباس", "قشم", "میناب", "جاسک", "حاجی‌آباد"] },
-  { province: "ایلام", cities: ["ایلام", "ایوان", "دهلران", "مهران", "آبدانان"] },
-  { province: "چهارمحال و بختیاری", cities: ["شهرکرد", "بروجن", "فارسان", "لردگان", "چلگرد"] },
-  { province: "خراسان جنوبی", cities: ["بیرجند", "قائن", "فردوس", "طبس", "سرایان"] },
-  { province: "خراسان شمالی", cities: ["بجنورد", "اسفراین", "جاجرم", "شیروان", "فاروج"] },
-  { province: "کهگیلویه و بویراحمد", cities: ["یاسوج", "گچساران", "دنا", "دوگنبدان"] },
+  {
+    province: "سمنان",
+    cities: ["سمنان", "شاهرود", "دامغان", "گرمسار", "مهدی‌شهر"],
+  },
+  {
+    province: "گلستان",
+    cities: ["گرگان", "گنبد کاووس", "علی‌آباد", "آق‌قلا", "کردکوی"],
+  },
+  {
+    province: "سیستان و بلوچستان",
+    cities: ["زاهدان", "زابل", "چابهار", "ایرانشهر", "سراوان"],
+  },
+  {
+    province: "کرمانشاه",
+    cities: ["کرمانشاه", "اسلام‌آباد", "پاوه", "سنقر", "هرسین"],
+  },
+  {
+    province: "هرمزگان",
+    cities: ["بندرعباس", "قشم", "میناب", "جاسک", "حاجی‌آباد"],
+  },
+  {
+    province: "ایلام",
+    cities: ["ایلام", "ایوان", "دهلران", "مهران", "آبدانان"],
+  },
+  {
+    province: "چهارمحال و بختیاری",
+    cities: ["شهرکرد", "بروجن", "فارسان", "لردگان", "چلگرد"],
+  },
+  {
+    province: "خراسان جنوبی",
+    cities: ["بیرجند", "قائن", "فردوس", "طبس", "سرایان"],
+  },
+  {
+    province: "خراسان شمالی",
+    cities: ["بجنورد", "اسفراین", "جاجرم", "شیروان", "فاروج"],
+  },
+  {
+    province: "کهگیلویه و بویراحمد",
+    cities: ["یاسوج", "گچساران", "دنا", "دوگنبدان"],
+  },
 ];
 
 async function seedUser() {
@@ -293,7 +408,7 @@ async function seedDemoToken() {
   const { hashPassword } = await import("better-auth/crypto");
   const passkeyHash = await hashPassword(DEMO_PASSKEY);
 
-  const demoEmail = "invite-demo@dadban.local";
+  const demoEmail = "invite-demo@daadnegar.local";
   let demoUser = await prisma.user.findUnique({
     where: { email: demoEmail },
   });

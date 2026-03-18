@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">داشبورد</h1>
-      <p className="text-muted-foreground mb-6">به پنل مدیریت دادبان خوش آمدید.</p>
+      <p className="text-muted-foreground mb-6">به پنل مدیریت دادنگار خوش آمدید.</p>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>

@@ -1,9 +1,9 @@
 # ONLY FOR DEVELOPMENT USAGE
 
 services:
-  dadban_db:
+  daadnegar_db:
     image: mysql:${DATABASE_VERSION:-8.0}
-    container_name: dadban_db
+    container_name: daadnegar_db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
@@ -17,7 +17,7 @@ services:
       - ./docker/mysql-init:/docker-entrypoint-initdb.d
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
-      - dadban_network
+      - daadnegar_network
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
@@ -26,7 +26,7 @@ services:
 
   minio:
     image: quay.io/minio/minio:latest
-    container_name: dadban_minio
+    container_name: daadnegar_minio
     restart: always
     command: server /data --console-address ":9001"
     environment:
@@ -38,7 +38,7 @@ services:
     volumes:
       - minio_data:/data
     networks:
-      - dadban_network
+      - daadnegar_network
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -46,19 +46,26 @@ services:
       retries: 5
       start_period: 10s
 
-  inngest:
-    image: inngest/inngest:latest
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: daadnegar_rabbitmq
     restart: always
-    command: >
-      inngest dev
-      -u http://host.docker.internal:3000/api/inngest
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
     ports:
-      - "8288:8288"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - daadnegar_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
-  dadban_network:
+  daadnegar_network:
 
 volumes:
   db_data:

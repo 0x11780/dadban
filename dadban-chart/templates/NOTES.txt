@@ -1,0 +1,43 @@
+daadnegar has been deployed. Components:
+{{- if .Values.database.enabled }}
+
+  MySQL (daadnegar_db):  {{ include "daadnegar-chart.fullname" . }}-mysql:3306
+{{- end }}
+{{- if .Values.minio.enabled }}
+
+  MinIO API:          {{ include "daadnegar-chart.fullname" . }}-minio:9000
+  MinIO Console:      {{ include "daadnegar-chart.fullname" . }}-minio:9001
+{{- end }}
+{{- if .Values.rabbitmq.enabled }}
+
+  RabbitMQ AMQP:      {{ include "daadnegar-chart.fullname" . }}-rabbitmq:5672
+  RabbitMQ Console:   {{ include "daadnegar-chart.fullname" . }}-rabbitmq:15672
+{{- end }}
+
+  Application:        {{ include "daadnegar-chart.fullname" . }}:3000
+
+{{- if .Values.ingress.enabled }}
+Get the application URL:
+{{- range $host := .Values.ingress.hosts }}
+{{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "daadnegar-chart.fullname" . }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+  kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "daadnegar-chart.fullname" . }}
+{{- else }}
+  To access the application locally, run:
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "daadnegar-chart.fullname" . }} 3000:3000
+  Then visit http://127.0.0.1:3000
+{{- end }}
+
+Before first use:
+  1. Set image.repository and image.tag to your built daadnegar image
+  2. Set database.rootPassword and database.password (or use existingSecret)
+  3. Set env.BETTER_AUTH_SECRET, env.BETTER_AUTH_URL, env.BOOTSTRAP_SECRET for production
+  4. Run: npx prisma migrate deploy (in your app's init or as a Job)

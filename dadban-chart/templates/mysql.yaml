@@ -1,0 +1,161 @@
+{{- if .Values.database.enabled }}
+{{- if not .Values.database.existingSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-mysql
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+type: Opaque
+stringData:
+  mysql-root-password: {{ .Values.database.rootPassword | default (randAlphaNum 24) | quote }}
+  mysql-password: {{ .Values.database.password | default (randAlphaNum 16) | quote }}
+  mysql-database: {{ .Values.database.database | quote }}
+  mysql-user: {{ .Values.database.user | quote }}
+---
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-mysql-init
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+data:
+  grant.sh: |
+    #!/bin/bash
+    set -e
+    until mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT 1" >/dev/null 2>&1; do
+      echo "Waiting for MySQL to be ready..."
+      sleep 2
+    done
+    echo "Granting CREATE DATABASE privileges to user: ${MYSQL_USER}"
+    mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOSQL
+    GRANT CREATE ON *.* TO '${MYSQL_USER}'@'%';
+    GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_USER}'@'%' WITH GRANT OPTION;
+    FLUSH PRIVILEGES;
+    EOSQL
+    echo "Privileges granted successfully to ${MYSQL_USER}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-mysql
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  ports:
+    - port: {{ .Values.database.port }}
+      targetPort: {{ .Values.database.port }}
+      protocol: TCP
+      name: mysql
+  selector:
+    {{- include "daadnegar-chart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-mysql
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "daadnegar-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        {{- include "daadnegar-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: mysql
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+          imagePullPolicy: {{ .Values.database.image.pullPolicy }}
+          args: {{ .Values.database.args | toJson }}
+          ports:
+            - containerPort: {{ .Values.database.port }}
+              name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-password
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: mysql-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+          {{- with .Values.database.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: mysql-data
+          {{- if .Values.database.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "daadnegar-chart.fullname" . }}-mysql-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: mysql-init
+          configMap:
+            name: {{ include "daadnegar-chart.fullname" . }}-mysql-init
+            defaultMode: 0755
+---
+{{- if .Values.database.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-mysql-data
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.database.persistence.storageClass }}
+  storageClassName: {{ .Values.database.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size }}
+---
+{{- end }}
+{{- end }}

@@ -5,7 +5,7 @@ const port = Number(process.env.MINIO_PORT ?? 9000);
 const useSSL = process.env.MINIO_USE_SSL === "true";
 const accessKey = process.env.MINIO_ACCESS_KEY ?? "minioadmin";
 const secretKey = process.env.MINIO_SECRET_KEY ?? "minioadmin";
-const bucket = process.env.MINIO_BUCKET ?? "dadban-uploads";
+const bucket = process.env.MINIO_BUCKET ?? "daadnegar-uploads";
 
 export const minioConfig = {
   endPoint: endpoint.replace(/^https?:\/\//, "").split(":")[0],

@@ -1,0 +1,166 @@
+# Default values for daadnegar-chart.
+# Aligned with docker-compose.yml services: daadnegar_db, minio, rabbitmq
+# This is a YAML-formatted file.
+
+replicaCount: 1
+
+# daadnegar application image
+image:
+  repository: daadnegar
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+# Main application service (Next.js on port 3000)
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources: {}
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 256Mi
+
+# Probes for Next.js app
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# =============================================================================
+# Database (MySQL) - from docker-compose daadnegar_db
+# Set enabled: false to use external MySQL; provide DATABASE_* via env or existingEnvSecret
+# =============================================================================
+database:
+  enabled: true
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  # Credentials - use existingSecret to reference external secret
+  rootPassword: ""
+  database: "daadnegar"
+  user: "daadnegar"
+  password: ""
+  # Or provide existing secret name (keys: mysql-root-password, mysql-password, mysql-database, mysql-user)
+  existingSecret: ""
+  port: 3306
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+  # MySQL init: grant.sh equivalent - extra command args
+  args:
+    - --default-authentication-plugin=mysql_native_password
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+  resources: {}
+
+# =============================================================================
+# MinIO - from docker-compose minio
+# Set enabled: false to use external MinIO; provide MINIO_* via env or existingEnvSecret
+# =============================================================================
+minio:
+  enabled: true
+  image:
+    repository: quay.io/minio/minio
+    tag: latest
+    pullPolicy: IfNotPresent
+  port: 9000
+  consolePort: 9001
+  # Credentials - use existingSecret to reference external secret
+  rootUser: "minioadmin"
+  rootPassword: "minioadmin"
+  existingSecret: ""
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+  resources: {}
+
+# =============================================================================
+# RabbitMQ - from docker-compose rabbitmq (queues + background jobs)
+# =============================================================================
+rabbitmq:
+  enabled: true
+  image:
+    repository: rabbitmq
+    tag: 3-management
+    pullPolicy: IfNotPresent
+  user: guest
+  password: guest
+  existingSecret: ""
+  resources: {}
+
+# =============================================================================
+# Worker - consumes RabbitMQ queues, runs cron (user-reactivation)
+# Uses same app image with different command
+# =============================================================================
+worker:
+  enabled: true
+  replicas: 1
+
+# =============================================================================
+# Application environment variables (injected into main deployment)
+# =============================================================================
+env: {}
+  # BETTER_AUTH_SECRET: "generate-a-secret"
+  # BETTER_AUTH_URL: "https://your-domain.com"
+  # BOOTSTRAP_SECRET: "bootstrap-secret"
+  # FRONTEND_URL: "https://your-domain.com"
+  # NEXT_PUBLIC_APP_URL: "https://your-domain.com"
+  # NODE_ENV: "production"
+
+# Use existing secret for sensitive env vars (optional)
+# Keys should match env var names: DATABASE_PASSWORD, MINIO_ACCESS_KEY, etc.
+existingEnvSecret: ""

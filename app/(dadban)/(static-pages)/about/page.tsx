@@ -11,12 +11,12 @@ export default function AboutPage() {
           <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
             <Info className="text-primary h-8 w-8" />
           </div>
-          <CardTitle className="text-foreground text-xl font-bold">درباره دادبان</CardTitle>
+          <CardTitle className="text-foreground text-xl font-bold">درباره دادنگار</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground text-justify leading-relaxed">
-            دادبان یک پلتفرم امن برای گزارش‌دهی است. ما به شما کمک می‌کنیم تا بتوانید به صورت ناشناس و
-            امن، گزارش‌های خود را ثبت کنید.
+            دادنگار یک پلتفرم امن برای گزارش‌دهی است. ما به شما کمک می‌کنیم تا بتوانید به صورت ناشناس
+            و امن، گزارش‌های خود را ثبت کنید.
           </p>
           <p className="text-muted-foreground text-justify leading-relaxed">
             هدف ما ایجاد شفافیت و کمک به اجرای عدالت است. تمام اطلاعات شما با بالاترین سطح امنیت

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { Shield, X, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const TOR_BANNER_DISMISSED_KEY = "dadban_tor_banner_dismissed";
-const ONION_ADDRESS = "dadban7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion";
+const TOR_BANNER_DISMISSED_KEY = "daadnegar_tor_banner_dismissed";
+const ONION_ADDRESS = "daadnegar7xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion";
 
 export function TorBanner() {
   const [show, setShow] = useState(false);

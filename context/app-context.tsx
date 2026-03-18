@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import type { AppState, AppScreen, Language, User, ReportCase, Person } from "@/types";
 import {
   api,
-  DADBAN_INVITE_TOKEN_KEY,
+  daadnegar_INVITE_TOKEN_KEY,
   setInviteTokenStorage,
   clearInviteTokenStorage,
 } from "@/lib/edyen";
@@ -80,10 +80,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const validateInviteCode = useCallback(async (code: string): Promise<ValidateInviteResult> => {
     const { data, error } = await api.invite.validate.post({ code });
     if (error || !data) {
-      return { ok: false, error: (error as Error)?.message ?? "کد دعوت نامعتبر است" };
+      return {
+        ok: false,
+        error: (error as Error)?.message ?? "کد دعوت نامعتبر است",
+      };
     }
     if (!("ok" in data) || !data.ok) {
-      return { ok: false, error: (data as { error?: string }).error ?? "کد دعوت نامعتبر است" };
+      return {
+        ok: false,
+        error: (data as { error?: string }).error ?? "کد دعوت نامعتبر است",
+      };
     }
     const { token, hasPasskey } = data;
     setInviteTokenStorage(token);
@@ -92,16 +98,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const registerPasskey = useCallback(async (passkey: string): Promise<PasskeyResult> => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) : null;
+      typeof window !== "undefined" ? localStorage.getItem(daadnegar_INVITE_TOKEN_KEY) : null;
     if (!token) {
       return { ok: false, error: "لطفاً ابتدا کد دعوت را وارد کنید" };
     }
-    const { data, error } = await api.invite.register.post({ token, passkey });
+    const { data, error } = await api.invite.register.post({
+      token,
+      passkey,
+    });
     if (error || !data) {
-      return { ok: false, error: (error as Error)?.message ?? "خطا در ثبت رمز عبور" };
+      return {
+        ok: false,
+        error: (error as Error)?.message ?? "خطا در ثبت رمز عبور",
+      };
     }
     if (!("ok" in data) || !data.ok) {
-      return { ok: false, error: (data as { error?: string }).error ?? "خطا در ثبت رمز عبور" };
+      return {
+        ok: false,
+        error: (data as { error?: string }).error ?? "خطا در ثبت رمز عبور",
+      };
     }
     const user = (data as { user?: User }).user;
     if (!user) return { ok: false, error: "خطا در دریافت اطلاعات کاربر" };
@@ -111,16 +126,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const verifyPasskey = useCallback(async (passkey: string): Promise<PasskeyResult> => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) : null;
+      typeof window !== "undefined" ? localStorage.getItem(daadnegar_INVITE_TOKEN_KEY) : null;
     if (!token) {
       return { ok: false, error: "لطفاً ابتدا کد دعوت را وارد کنید" };
     }
     const { data, error } = await api.invite.verify.post({ token, passkey });
     if (error || !data) {
-      return { ok: false, error: (error as Error)?.message ?? "رمز عبور نادرست است" };
+      return {
+        ok: false,
+        error: (error as Error)?.message ?? "رمز عبور نادرست است",
+      };
     }
     if (!("ok" in data) || !data.ok) {
-      return { ok: false, error: (data as { error?: string }).error ?? "رمز عبور نادرست است" };
+      return {
+        ok: false,
+        error: (data as { error?: string }).error ?? "رمز عبور نادرست است",
+      };
     }
     const user = (data as { user?: User }).user;
     if (!user) return { ok: false, error: "خطا در دریافت اطلاعات کاربر" };
@@ -136,7 +157,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startReport = useCallback(() => {
     console.log("[v0] Starting new report");
-    setState((prev) => ({ ...prev, currentReport: { id: crypto.randomUUID() } }));
+    setState((prev) => ({
+      ...prev,
+      currentReport: { id: crypto.randomUUID() },
+    }));
   }, []);
 
   const updateReport = useCallback((data: Partial<ReportCase>) => {
@@ -213,7 +237,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : null,
       }));
     }
-    return { tokensAwarded: (data as { tokensAwarded?: number })?.tokensAwarded };
+    return {
+      tokensAwarded: (data as { tokensAwarded?: number })?.tokensAwarded,
+    };
   }, [state.currentReport]);
 
   const selectRequest = useCallback((request: ReportCase) => {
@@ -255,7 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem(DADBAN_INVITE_TOKEN_KEY) : null;
+      typeof window !== "undefined" ? localStorage.getItem(daadnegar_INVITE_TOKEN_KEY) : null;
     if (token) {
       await fetch("/api/me/logout", {
         method: "POST",
@@ -266,7 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await authClient.signOut();
     if (typeof window !== "undefined") {
       clearInviteTokenStorage();
-      sessionStorage.setItem("dadban_logout_toast", "1");
+      sessionStorage.setItem("daadnegar_logout_toast", "1");
     }
     setState((prev) => ({ ...prev, user: null }));
     window.location.href = routes.home;
