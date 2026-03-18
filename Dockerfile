@@ -35,7 +35,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Install specific version of Prisma CLI for migrations (in runner stage)
-RUN corepack enable && npm install -g prisma@6.16.1
+RUN corepack enable && npm install -g prisma@7.5.0
 
 COPY --from=builder /app/public ./public
 
@@ -44,6 +44,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 # Copy generated Prisma client for runtime
 COPY --from=builder /app/generated/prisma ./generated/prisma
 
