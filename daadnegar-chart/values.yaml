@@ -35,7 +35,9 @@ service:
 ingress:
   enabled: true
   className: nginx
-  annotations: {}
+  # cert-manager + Let's Encrypt (requires cert-manager installed and ClusterIssuer "letsencrypt-prod")
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
     - host: daadnegar.com
       paths:
@@ -45,7 +47,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-  tls: []
+  tls:
+    - secretName: daadnegar-tls
+      hosts:
+        - daadnegar.com
+        - www.daadnegar.com
 
 resources: {}
   # limits:
