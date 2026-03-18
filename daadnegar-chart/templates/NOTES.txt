@@ -40,4 +40,4 @@ Before first use:
   1. Set image.repository and image.tag to your built daadnegar image
   2. Set database.rootPassword and database.password (or use existingSecret)
   3. Set env.BETTER_AUTH_SECRET, env.BETTER_AUTH_URL, env.BOOTSTRAP_SECRET for production
-  4. Run: npx prisma migrate deploy (in your app's init or as a Job)
+  4. Prisma migrations run automatically via init container

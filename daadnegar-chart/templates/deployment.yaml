@@ -30,6 +30,19 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "daadnegar-chart.serviceAccountName" . }}
+      {{- if .Values.database.enabled }}
+      initContainers:
+        - name: prisma-migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["npx", "prisma", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-url
+      {{- end }}
       {{- with .Values.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -68,6 +81,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
                   key: mysql-database
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-mysql" (include "daadnegar-chart.fullname" .)) }}
+                  key: mysql-url
             {{- end }}
             {{- if .Values.minio.enabled }}
             - name: MINIO_ENDPOINT

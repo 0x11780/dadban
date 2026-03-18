@@ -41,6 +41,10 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+    - host: www.daadnegar.com
+      paths:
+        - path: /
+          pathType: Prefix
   tls: []
 
 resources: {}

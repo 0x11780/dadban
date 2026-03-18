@@ -194,3 +194,17 @@ helm secrets decrypt daadnegar-chart/secrets.yaml
 # Edit in place (SOPS)
 sops daadnegar-chart/secrets.yaml
 ```
+
+## Troubleshooting
+
+### 404 when visiting the site
+
+If you see 404 on the root URL, common causes:
+
+1. **Missing DATABASE_URL** – The app requires `DATABASE_URL` for Prisma. The chart injects it from the MySQL secret's `mysql-url` key. When using `database.existingSecret`, ensure your secret includes `mysql-url` with the full connection string: `mysql://USER:PASSWORD@HOST:3306/DATABASE` (replace HOST with `daadnegar-mysql` or `RELEASE-mysql` in your namespace).
+
+2. **Pods not ready** – Check that the app pods are running: `kubectl get pods -l app.kubernetes.io/name=daadnegar-chart`. If they're in CrashLoopBackOff, inspect logs: `kubectl logs -l app.kubernetes.io/component=app --tail=100`
+
+3. **Migrations failed** – The init container runs `prisma migrate deploy` before the app starts. If it fails, the pod won't become ready. Check init container logs: `kubectl logs <pod-name> -c prisma-migrate`
+
+4. **DNS / www** – The ingress serves both `daadnegar.com` and `www.daadnegar.com`. Ensure your DNS points to the cluster's ingress controller.

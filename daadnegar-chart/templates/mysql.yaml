@@ -14,6 +14,7 @@ stringData:
   mysql-password: {{ .Values.database.password | default (randAlphaNum 16) | quote }}
   mysql-database: {{ .Values.database.database | quote }}
   mysql-user: {{ .Values.database.user | quote }}
+  mysql-url: "mysql://{{ .Values.database.user }}:{{ .Values.database.password | default (randAlphaNum 16) | urlquery }}@{{ include "daadnegar-chart.fullname" . }}-mysql:{{ .Values.database.port }}/{{ .Values.database.database }}"
 ---
 {{- end }}
 apiVersion: v1
