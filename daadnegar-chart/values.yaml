@@ -10,7 +10,8 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
-imagePullSecrets: []
+imagePullSecrets:
+  - name: ghcr-secret
 nameOverride: ""
 fullnameOverride: ""
 
@@ -32,11 +33,11 @@ service:
   port: 3000
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: nginx
   annotations: {}
   hosts:
-    - host: chart-example.local
+    - host: daadnegar.com
       paths:
         - path: /
           pathType: Prefix

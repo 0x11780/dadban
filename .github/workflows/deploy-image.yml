@@ -129,6 +129,5 @@ jobs:
           helm secrets upgrade --install daadnegar ./daadnegar-chart \
             --set image.repository=ghcr.io/${{ env.IMAGE }} \
             --set image.tag=v${{ steps.version.outputs.version }} \
-            --set imagePullSecrets[0].name=ghcr-secret \
             -f daadnegar-chart/secrets.yaml \
             --wait --timeout 5m
