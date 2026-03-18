@@ -17,6 +17,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma Client (no DB needed)
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"                                                                                               
+ENV DATABASE_URL=$DATABASE_URL
 RUN corepack enable && pnpm run prisma:generate
 # Build Next.js (standalone output)
 RUN pnpm build
