@@ -34,8 +34,8 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Install Prisma CLI and dotenv for migrations (prisma.config.ts requires dotenv per docs)
-RUN corepack enable && npm install -g prisma@7.5.0 && npm init -y && npm install dotenv
+# Install Prisma CLI for migrations
+RUN corepack enable && npm install -g prisma@7.5.0
 
 COPY --from=builder /app/public ./public
 
@@ -47,6 +47,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 # Copy generated Prisma client for runtime
 COPY --from=builder /app/generated/prisma ./generated/prisma
+
+# Install dotenv + prisma + @prisma/config AFTER standalone copy (prisma.config.ts needs these; standalone overwrites node_modules)
+RUN npm init -y && npm install dotenv prisma@7.5.0 @prisma/config@7.5.0
 
 USER nextjs
 
