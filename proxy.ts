@@ -12,7 +12,7 @@ function getInviteTokenFromCookie(cookieHeader: string | null): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const baseUrl = request.nextUrl.origin;
 

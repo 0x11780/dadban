@@ -15,12 +15,12 @@ export default async function RegisterPage({
   }
 
   return (
-    <Suspense
-      fallback={<div className="flex items-center justify-center p-4">در حال بارگذاری...</div>}
-    >
-      <AppProvider>
+    <AppProvider>
+      <Suspense
+        fallback={<div className="flex items-center justify-center p-4">در حال بارگذاری...</div>}
+      >
         <RegisterScreen />
-      </AppProvider>
-    </Suspense>
+      </Suspense>
+    </AppProvider>
   );
 }

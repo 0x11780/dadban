@@ -19,7 +19,5 @@ export function DirectionProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.lang = state.language === "fa" ? "fa" : "en";
   }, [dir, state.language]);
 
-  console.log("dir", dir);
-
   return <RadixDirectionProvider dir={dir}>{children}</RadixDirectionProvider>;
 }
