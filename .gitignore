@@ -13,3 +13,8 @@ node_modules/
 .env
 
 /generated/prisma
+
+# Helm Secrets
+daadnegar-chart/secrets.decrypted.yaml
+daadnegar-chart/secrets.yaml.dec
+daadnegar-chart/.sops.yaml

@@ -1,0 +1,196 @@
+# Daadnegar Helm Chart
+
+Helm chart for deploying the **dadban** (daadnegar) Next.js application on Kubernetes with MySQL, MinIO, RabbitMQ, and a background worker.
+
+## Prerequisites
+
+- Kubernetes 1.19+
+- Helm 3.2.0+
+- PV provisioner (e.g. local-path or default storage class)
+- [helm-secrets](https://github.com/jkroepke/helm-secrets) plugin
+- SOPS and a GPG key for encrypting secrets
+
+## Components
+
+| Component    | Description                              |
+| ------------ | ---------------------------------------- |
+| **App**      | Next.js app (port 3000) with Better Auth |
+| **MySQL**    | Database (daadnegar)                     |
+| **MinIO**    | Object storage for uploads               |
+| **RabbitMQ** | Message queue for background jobs        |
+| **Worker**   | Consumes RabbitMQ, runs cron jobs        |
+
+## Setup
+
+### 1. Install Dependencies
+
+```bash
+# Helm Secrets plugin
+helm plugin install https://github.com/jkroepke/helm-secrets
+
+# SOPS
+# macOS:
+brew install sops
+# Linux:
+curl -LO https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64
+sudo mv sops-v3.10.2.linux.amd64 /usr/local/bin/sops
+sudo chmod +x /usr/local/bin/sops
+```
+
+### 2. Generate a GPG Key (if needed)
+
+```bash
+gpg --gen-key
+gpg --list-keys
+```
+
+### 3. Configure SOPS
+
+Update `daadnegar-chart/.sops.yaml` with your GPG key fingerprint:
+
+```yaml
+keys:
+  - &pgp-key YOUR_GPG_KEY_FINGERPRINT
+creation_rules:
+  - path_regex: .*secrets\.yaml$
+    pgp: *pgp-key
+```
+
+### 4. Generate and Encrypt Secrets
+
+Generate secrets with secure random values:
+
+```bash
+./daadnegar-chart/scripts/generate-secrets.sh > daadnegar-chart/secrets.yaml
+```
+
+Set your production domain (optional):
+
+```bash
+YOUR_DOMAIN=app.example.com ./daadnegar-chart/scripts/generate-secrets.sh > daadnegar-chart/secrets.yaml
+```
+
+Then encrypt (uses key from `.sops.yaml`):
+
+```bash
+sops -e --input-type yaml --output-type yaml -i daadnegar-chart/secrets.yaml
+```
+
+Or edit in place (SOPS decrypts, opens editor, re-encrypts on save):
+
+```bash
+sops daadnegar-chart/secrets.yaml
+```
+
+### 5. GitHub Actions Secrets
+
+For CI/CD, add these repository secrets:
+
+| Secret                  | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `GPG_PRIVATE_KEY`       | Base64-encoded GPG private key: `gpg --export-secret-keys KEY_ID \| base64` |
+| `KUBE_CONFIG`           | kubeconfig for the target cluster                                           |
+| `NX_CLOUD_ACCESS_TOKEN` | Optional Nx Cloud token                                                     |
+
+## Configuration
+
+### Main Parameters
+
+| Parameter                   | Description     | Default        |
+| --------------------------- | --------------- | -------------- |
+| `replicaCount`              | App replicas    | `1`            |
+| `image.repository`          | Image name      | `daadnegar`    |
+| `image.tag`                 | Image tag       | `""`           |
+| `image.pullPolicy`          | Pull policy     | `IfNotPresent` |
+| `service.type`              | Service type    | `ClusterIP`    |
+| `service.port`              | App port        | `3000`         |
+| `database.enabled`          | Enable MySQL    | `true`         |
+| `database.persistence.size` | MySQL PVC size  | `10Gi`         |
+| `minio.enabled`             | Enable MinIO    | `true`         |
+| `minio.persistence.size`    | MinIO PVC size  | `10Gi`         |
+| `rabbitmq.enabled`          | Enable RabbitMQ | `true`         |
+| `worker.enabled`            | Enable worker   | `true`         |
+| `autoscaling.enabled`       | HPA             | `false`        |
+| `ingress.enabled`           | Ingress         | `false`        |
+
+### Secrets (in secrets.yaml)
+
+| Parameter                 | Description                    |
+| ------------------------- | ------------------------------ |
+| `database.rootPassword`   | MySQL root password            |
+| `database.password`       | App DB user password           |
+| `database.database`       | Database name                  |
+| `database.user`           | DB username                    |
+| `minio.rootUser`          | MinIO access key               |
+| `minio.rootPassword`      | MinIO secret key               |
+| `rabbitmq.user`           | RabbitMQ username              |
+| `rabbitmq.password`       | RabbitMQ password              |
+| `env.BETTER_AUTH_SECRET`  | Better Auth secret (32+ bytes) |
+| `env.BOOTSTRAP_SECRET`    | Bootstrap API secret           |
+| `env.BETTER_AUTH_URL`     | Auth callback URL              |
+| `env.FRONTEND_URL`        | Frontend URL                   |
+| `env.NEXT_PUBLIC_APP_URL` | Public app URL                 |
+| `env.NODE_ENV`            | `production`                   |
+
+## Install / Upgrade
+
+```bash
+# Install
+helm secrets upgrade --install daadnegar ./daadnegar-chart \
+  -f daadnegar-chart/secrets.yaml \
+  --set image.tag=v1.0.0 \
+  --wait --timeout 5m
+
+# Upgrade (e.g. with new image tag)
+helm secrets upgrade daadnegar ./daadnegar-chart \
+  -f daadnegar-chart/secrets.yaml \
+  --set image.tag=v1.0.1 \
+  --wait --timeout 5m
+```
+
+Images are pulled from `ghcr.io/<owner>/daadnegar` (set in GitHub Actions workflow).
+
+## Access the Application
+
+Port-forward:
+
+```bash
+kubectl port-forward service/daadnegar 3000:3000
+```
+
+Open http://localhost:3000
+
+MinIO console (if enabled):
+
+```bash
+kubectl port-forward service/daadnegar-minio 9001:9001
+```
+
+RabbitMQ management:
+
+```bash
+kubectl port-forward service/daadnegar-rabbitmq 15672:15672
+```
+
+## Ingress
+
+```bash
+helm secrets upgrade daadnegar ./daadnegar-chart \
+  -f daadnegar-chart/secrets.yaml \
+  --set ingress.enabled=true \
+  --set ingress.className=nginx \
+  --set ingress.hosts[0].host=app.example.com \
+  --set ingress.hosts[0].paths[0].path=/ \
+  --set ingress.hosts[0].paths[0].pathType=Prefix \
+  --wait
+```
+
+## Decrypt / Re-encrypt Secrets
+
+```bash
+# Decrypt to stdout
+helm secrets decrypt daadnegar-chart/secrets.yaml
+
+# Edit in place (SOPS)
+sops daadnegar-chart/secrets.yaml
+```
