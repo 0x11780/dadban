@@ -73,7 +73,7 @@ YOUR_DOMAIN=app.example.com ./daadnegar-chart/scripts/generate-secrets.sh > daad
 Then encrypt (uses key from `.sops.yaml`):
 
 ```bash
-sops -e --input-type yaml --output-type yaml -i daadnegar-chart/secrets.yaml
+sops -e --input-type yaml --output-type yaml --output secrets.yaml secrets.yaml.dec
 ```
 
 Or edit in place (SOPS decrypts, opens editor, re-encrypts on save):
