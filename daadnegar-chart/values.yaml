@@ -146,9 +146,10 @@ rabbitmq:
 # =============================================================================
 # Worker - consumes RabbitMQ queues, runs cron (user-reactivation)
 # Uses same app image with different command
+# Set enabled: false if you don't use report-assign, Slack notifications, or user-reactivation
 # =============================================================================
 worker:
-  enabled: true
+  enabled: false
   replicas: 1
 
 # =============================================================================
