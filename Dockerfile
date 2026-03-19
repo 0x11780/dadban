@@ -34,7 +34,9 @@ FROM base AS release
 RUN apt update && apt install -y dumb-init --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=node:node --from=build /app/package.json /app/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+# Use full install (not --prod): prisma migrate needs prisma/config → @prisma/config,
+# which can fail to resolve with prod-only install in containerized pnpm.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 COPY --chown=node:node --from=build /app/.next ./.next
 COPY --chown=node:node --from=build /app/public ./public
