@@ -1,0 +1,116 @@
+name: Deploy Image dev
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  IMAGE: ${{ github.repository_owner }}/daadnegar
+  NODE_OPTIONS: "--max-old-space-size=8192"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4.1.4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Extract version from package.json
+        id: version
+        run: echo "version=${{ github.sha | truncate(7) }}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registery
+        uses: docker/login-action@v3.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+
+      - name: Extract Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          tags: type=semver,pattern={{version}},prefix=v,value=${{ steps.version.outputs.version }}
+          images: |
+            ghcr.io/${{ env.IMAGE }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: .
+          platforms: linux/amd64
+          tags: ghcr.io/${{ env.IMAGE }}:v${{ steps.version.outputs.version }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          build-args: |
+            NX_CLOUD_ACCESS_TOKEN=${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+            NODE_OPTIONS="--max-old-space-size=8192"
+
+      # Kubernetes deployment steps
+      - name: Set up kubeconfig
+        uses: azure/k8s-set-context@v3
+        with:
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Install SOPS
+        run: |
+          curl -L https://github.com/getsops/sops/releases/download/v3.10.2/sops-v3.10.2.linux.amd64 -o sops
+          chmod +x sops
+          sudo mv sops /usr/local/bin/
+          sops --version
+
+      - name: Install Helm Secrets plugin
+        run: |
+          helm plugin install https://github.com/jkroepke/helm-secrets
+
+      - name: Setup GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+          gpg --list-secret-keys
+
+      - name: Create GHCR image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.repository_owner }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy to Kubernetes with Helm Secrets
+        run: |
+          helm secrets upgrade --install daadnegar ./daadnegar-chart \
+            --set image.repository=ghcr.io/${{ env.IMAGE }} \
+            --set image.tag=v${{ steps.version.outputs.version }} \
+            -f daadnegar-chart/secrets.yaml \
+            --wait --timeout 5m
