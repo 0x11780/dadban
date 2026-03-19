@@ -45,7 +45,10 @@ jobs:
 
       - name: Extract version from package.json
         id: version
-        run: echo "version=${{ github.sha | truncate(7) }}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "COMMIT_SHA_SHORT=${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "version=${COMMIT_SHA_SHORT}-${CURRENT_DATE}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub Container Registery
         uses: docker/login-action@v3.1.0
