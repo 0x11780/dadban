@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getServerSideAppOrigin } from "@/lib/app-base-url";
 import { daadnegar_INVITE_TOKEN_COOKIE } from "@/lib/edyen";
 
 export const config = {
@@ -14,6 +15,8 @@ function getInviteTokenFromCookie(cookieHeader: string | null): string | null {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  /** Same-process fetch; avoid https public origin inside the pod (TLS vs HTTP mismatch). */
+  const internalOrigin = getServerSideAppOrigin();
   const baseUrl = request.nextUrl.origin;
 
   // --- Panel routes: require user auth, redirect to home if not logged in ---
@@ -29,7 +32,7 @@ export async function proxy(request: NextRequest) {
       headers["Authorization"] = `Bearer ${inviteToken}`;
     }
 
-    const res = await fetch(`${baseUrl}/api/me`, {
+    const res = await fetch(new URL("/api/me", internalOrigin), {
       headers,
       cache: "no-store",
     });
@@ -46,7 +49,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const res = await fetch(`${baseUrl}/api/admin/me`, {
+  const res = await fetch(new URL("/api/admin/me", internalOrigin), {
     headers: {
       Cookie: request.headers.get("cookie") ?? "",
     },

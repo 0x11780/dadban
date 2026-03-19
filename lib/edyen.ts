@@ -1,5 +1,6 @@
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@/server/app";
+import { getAppBaseUrl } from "@/lib/app-base-url";
 
 export const DAADNEGAR_INVITE_TOKEN_KEY = "daadnegar_invite_token";
 export const daadnegar_INVITE_TOKEN_COOKIE = "daadnegar_invite_token";
@@ -18,17 +19,12 @@ export function clearInviteTokenStorage() {
   document.cookie = `${daadnegar_INVITE_TOKEN_COOKIE}=; path=/; max-age=0`;
 }
 
-const getBaseUrl = () =>
-  typeof window !== "undefined"
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
 function getInviteToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(DAADNEGAR_INVITE_TOKEN_KEY);
 }
 
-export const api = treaty<App>(getBaseUrl(), {
+export const api = treaty<App>(getAppBaseUrl(), {
   fetch: { credentials: "include" },
   headers: () => {
     const token = getInviteToken();
@@ -45,7 +41,7 @@ export const api = treaty<App>(getBaseUrl(), {
 /** آپلود امن فایل (حذف متادیتا و ذخیره در MinIO) - برای اسناد گزارش */
 export async function uploadReportFile(file: File): Promise<{ key: string; name: string }> {
   const token = getInviteToken();
-  const base = getBaseUrl();
+  const base = getAppBaseUrl();
   const form = new FormData();
   form.append("file", file);
   const res = await fetch(`${base}/api/upload`, {
@@ -72,7 +68,7 @@ export async function uploadReportFile(file: File): Promise<{ key: string; name:
 /** دریافت جزئیات گزارش در انتظار (برای اعتبارسنج) */
 export async function getPendingReportDetail(id: string) {
   const token = getInviteToken();
-  const base = getBaseUrl();
+  const base = getAppBaseUrl();
   const res = await fetch(`${base}/api/reports/pending/${id}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     credentials: "include",
