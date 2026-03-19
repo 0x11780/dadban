@@ -22,6 +22,10 @@ COPY . .
 
 ENV NODE_OPTIONS=$NODE_OPTIONS
 
+
+# prisma.config.ts loads env("DATABASE_URL") at config load — use placeholder for generate (no DB connection)
+ARG DATABASE_URL=mysql://localhost:3306/dummy
+RUN DATABASE_URL=${DATABASE_URL} pnpm run prisma:generate
 RUN pnpm run build
 
 # --- Release Image ---
@@ -36,9 +40,10 @@ COPY --chown=node:node --from=build /app/.next ./.next
 COPY --chown=node:node --from=build /app/public ./public
 COPY --chown=node:node --from=build /app/prisma ./prisma
 COPY --chown=node:node --from=build /app/prisma.config.ts ./prisma.config.ts
-# prisma.config.ts loads env("DATABASE_URL") at config load — use placeholder for generate (no DB connection)
-ARG DATABASE_URL=mysql://localhost:3306/dummy
-RUN DATABASE_URL=${DATABASE_URL} pnpm run prisma:generate
+
+# Copy generated Prisma client for runtime
+COPY --from=build /app/generated/prisma ./generated/prisma
+
 
 ENV TZ=UTC
 ENV PORT=3000
