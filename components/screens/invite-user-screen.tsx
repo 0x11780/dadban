@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { api, DAADNEGAR_INVITE_TOKEN_KEY } from "@/lib/edyen";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -97,20 +96,12 @@ export function InviteUserScreen() {
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inviteType === "personal" && !email.trim()) {
-      setError("برای دعوت اختصاصی، ایمیل الزامی است.");
-      return;
-    }
     setError("");
     setSuccessMessage("");
     setInviteCode("");
     setIsLoading(true);
 
-    const trimmedEmail = email.trim();
-    const body =
-      inviteType === "personal" && trimmedEmail
-        ? { type: "personal" as const, email: trimmedEmail }
-        : { type: "public" as const };
+    const body = { type: "public" as const };
     const token =
       typeof window !== "undefined" ? localStorage.getItem(DAADNEGAR_INVITE_TOKEN_KEY) : null;
     const opts = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
@@ -177,64 +168,15 @@ export function InviteUserScreen() {
                 <DialogTitle className="text-foreground text-xl font-black">
                   ایجاد کد دعوت
                 </DialogTitle>
-                <DialogDescription>نوع کد دعوت را انتخاب کنید</DialogDescription>
               </DialogHeader>
               <div className="border-border my-0.5 border-t" />
               <form onSubmit={handleCreateInvite} className="space-y-4">
-                {!inviteCode && (
-                  <>
-                    <div className="space-y-3">
-                      <Label className="text-foreground text-sm font-bold">نوع کد دعوت</Label>
-                      <RadioGroup
-                        value={inviteType}
-                        onValueChange={(v) => setInviteType(v as InviteType)}
-                        className="flex flex-col gap-2"
-                      >
-                        <div className="border-border bg-muted/30 flex items-center gap-3 rounded-lg border p-3">
-                          <RadioGroupItem value="personal" id="type-personal" />
-                          <Label htmlFor="type-personal" className="flex-1 cursor-pointer text-xs">
-                            اختصاصی (مخصوص یک ایمیل)
-                          </Label>
-                        </div>
-                        <div className="border-border bg-muted/30 flex items-center gap-3 rounded-lg border p-3">
-                          <RadioGroupItem value="public" id="type-public" />
-                          <Label htmlFor="type-public" className="flex-1 cursor-pointer text-xs">
-                            عمومی (هرکسی می‌تواند استفاده کند)
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-foreground text-sm font-bold" htmlFor="modal-email">
-                        ایمیل
-                        {inviteType === "public" && (
-                          <p className="text-muted-foreground text-[10px] font-normal">
-                            (برای دعوت عمومی، نیازی به ایمیل نیست)
-                          </p>
-                        )}
-                      </Label>
-                      <Input
-                        id="modal-email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="text-center"
-                        dir="ltr"
-                        disabled={inviteType === "public"}
-                      />
-                    </div>
-
-                    {error && (
-                      <Alert variant="error">
-                        <AlertCircle className="h-4 w-4 shrink-0" />
-                        <AlertDescription className="text-xs">{error}</AlertDescription>
-                      </Alert>
-                    )}
-                  </>
-                )}
-
+                <Alert size="xs" variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    برای جلوگیری از سوءاستفاده، لطفاً فقط به افرادی که می‌شناسید کد دعوت را بدهید
+                  </AlertDescription>
+                </Alert>
                 {successMessage && inviteCode && (
                   <div className="space-y-3 rounded-lg border border-green-200 bg-green-50/50 p-4 dark:border-green-900/50 dark:bg-green-950/20">
                     <div className="flex items-start gap-2">
