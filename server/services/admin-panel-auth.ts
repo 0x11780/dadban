@@ -3,6 +3,7 @@ import { prisma } from "../db";
 import { auth } from "@/lib/auth";
 import { createAuditLog } from "./audit";
 import { randomBytes } from "node:crypto";
+import { isPasswordSecure } from "@/lib/password-utils";
 
 const ADMIN_PANEL_COOKIE = "admin_panel_session";
 const SESSION_MINUTES = 5;
@@ -157,7 +158,69 @@ export const adminPanelAuthService = new Elysia({
       return { user: null };
     }
     return { user: { username: session.adminPanelUser.username } };
-  });
+  })
+  .put(
+    "/password",
+    async ({ body, request, ip, set }) => {
+      const panel = await getAdminPanelSession(request);
+      if (!panel) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      const panelUser = await prisma.adminPanelUser.findUnique({
+        where: { id: panel.adminPanelUser.id },
+      });
+      if (!panelUser) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      const ctx = await auth.$context;
+      const currentOk = await ctx.password.verify({
+        password: body.currentPassword,
+        hash: panelUser.passwordHash,
+      });
+      if (!currentOk) {
+        set.status = 400;
+        return { error: "رمز عبور فعلی نادرست است" };
+      }
+
+      if (!isPasswordSecure(body.newPassword)) {
+        set.status = 400;
+        return {
+          error: "رمز جدید باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و کاراکتر خاص باشد",
+        };
+      }
+
+      const passwordHash = await ctx.password.hash(body.newPassword);
+      await prisma.adminPanelUser.update({
+        where: { id: panelUser.id },
+        data: { passwordHash },
+      });
+
+      await createAuditLog({
+        action: "update",
+        entity: "AdminPanel",
+        entityId: panelUser.id,
+        details: JSON.stringify({ field: "password", self: true }),
+        ctx: {
+          adminPanelUserId: panelUser.id,
+          adminPanelUsername: panelUser.username,
+          ipAddress: ip?.address,
+          userAgent: request.headers.get("user-agent") ?? undefined,
+        },
+      });
+
+      return { success: true };
+    },
+    {
+      body: t.Object({
+        currentPassword: t.String(),
+        newPassword: t.String({ minLength: 8 }),
+      }),
+    },
+  );
 
 export async function getAdminPanelSession(request: Request): Promise<{
   adminPanelUser: { id: string; username: string };

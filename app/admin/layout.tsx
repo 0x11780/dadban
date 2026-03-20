@@ -18,6 +18,7 @@ import {
   Settings,
   List,
   ClipboardList,
+  UserRound,
 } from "lucide-react";
 import { AdminAuthGuard } from "@/components/admin-auth-guard";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -62,6 +63,7 @@ const navItems = [
 
 const settingsSubItems = [
   { href: "/admin/settings", label: "تنظیمات سیستم", icon: Settings },
+  { href: "/admin/settings/user", label: "تنظیمات کاربر", icon: UserRound },
   { href: "/admin/settings/ip-whitelist", label: "IP های مجاز", icon: Globe },
   { href: "/admin/settings/panel-users", label: "کاربران پنل", icon: UserCog },
 ];
