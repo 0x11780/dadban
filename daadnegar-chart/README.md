@@ -19,12 +19,20 @@ Helm chart for deploying the **dadban** (daadnegar) Next.js application on Kuber
 | **MinIO**    | Object storage for uploads               |
 | **RabbitMQ** | Message queue for background jobs        |
 | **Worker**   | Consumes RabbitMQ, runs cron jobs        |
+| **Grafana**  | Optional UI (subchart, ClusterIP); add datasources (e.g. Loki) as needed |
+| **Loki**     | Optional log aggregation (subchart, ClusterIP); needs a log shipper (this chart uses **Alloy**) or another client |
+| **Alloy**    | Optional [Grafana Alloy](https://grafana.com/docs/alloy/latest/) — ships pod logs to Loki (Promtail is deprecated; see [Migrate to Alloy](https://grafana.com/docs/loki/latest/setup/migrate/migrate-to-alloy/)) |
+
+**Do you need Loki?** Only if you want **logs in Grafana** (Explore, dashboards). Grafana alone does not collect or store logs. For **metrics** you would add Prometheus (not included here), not Loki.
 
 ## Setup
 
 ### 1. Install Dependencies
 
 ```bash
+# Fetch Grafana / Loki / Alloy subcharts (after clone or Chart.yaml dependency changes)
+helm dependency update ./daadnegar-chart
+
 # Helm Secrets plugin
 helm plugin install https://github.com/jkroepke/helm-secrets
 
@@ -109,9 +117,12 @@ For CI/CD, add these repository secrets:
 | `minio.enabled`             | Enable MinIO    | `true`         |
 | `minio.persistence.size`    | MinIO PVC size  | `10Gi`         |
 | `rabbitmq.enabled`          | Enable RabbitMQ | `true`         |
-| `worker.enabled`            | Enable worker   | `true`         |
+| `worker.enabled`            | Enable worker   | `false`        |
+| `grafana.enabled`           | Grafana subchart | `false`       |
+| `loki.enabled`              | Loki subchart    | `false`       |
+| `alloy.enabled`             | Grafana Alloy (→ Loki) | `false` |
 | `autoscaling.enabled`       | HPA             | `false`        |
-| `ingress.enabled`           | Ingress         | `false`        |
+| `ingress.enabled`           | Ingress         | `true` (see values) |
 
 ### Secrets (in secrets.yaml)
 
@@ -171,6 +182,21 @@ RabbitMQ management:
 ```bash
 kubectl port-forward service/daadnegar-rabbitmq 15672:15672
 ```
+
+Grafana (enable with `grafana.enabled=true`; not exposed via Ingress by default):
+
+```bash
+# Admin password: kubectl get secret <release>-grafana -o jsonpath='{.data.admin-password}' | base64 -d
+kubectl port-forward service/<release>-grafana 3001:80
+```
+
+Open http://127.0.0.1:3001 (local port 3001 avoids clashing with the app on 3000).
+
+**Loki + Alloy** (optional; enable with `loki.enabled=true` and `alloy.enabled=true`). Alloy runs as a **single-replica Deployment** that tails pod logs via the Kubernetes API and pushes to Loki (see [Collect Kubernetes logs](https://grafana.com/docs/alloy/latest/collect/logs-in-kubernetes/)). Loki stays ClusterIP-only; you normally do not port-forward it. With `grafana.sidecar.datasources.enabled=true` (default in chart values), a ConfigMap provisions the **Loki** datasource in Grafana pointing at `http://<release>-loki:3100`.
+
+For larger clusters you may want more replicas, a [clustered Alloy](https://grafana.com/docs/alloy/latest/get-started/clustering/) setup, or a DaemonSet with per-node `discovery.kubernetes` selectors (as in the doc above) instead of one global collector.
+
+The bundled Loki values use **`loki.useTestSchema: true`** for a minimal filesystem single-binary setup—fine for trying the stack; for long-term production retention, plan a proper [Loki schema](https://grafana.com/docs/loki/latest/operations/storage/schema/) and storage.
 
 ## Ingress
 

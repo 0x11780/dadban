@@ -179,3 +179,93 @@ env: {}
 # Use existing secret for sensitive env vars (optional)
 # Keys should match env var names: DATABASE_PASSWORD, MINIO_ACCESS_KEY, etc.
 existingEnvSecret: ""
+
+# =============================================================================
+# Grafana (optional subchart) — ClusterIP only; no Ingress. Access via:
+#   kubectl port-forward svc/<release>-grafana 3001:80 -n <ns>
+# Set adminPassword or grafana.admin.existingSecret before enabling in prod.
+# Sidecar loads the Loki datasource ConfigMap when loki.enabled is true (label must match labelValue).
+# =============================================================================
+grafana:
+  enabled: false
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  adminUser: admin
+  # adminPassword: set via secrets overlay or --set (omit to let chart generate on first install if supported)
+  resources: {}
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+
+# =============================================================================
+# Loki (optional) — log store for Grafana Explore / dashboards. ClusterIP only.
+# SingleBinary + filesystem PVC; uses useTestSchema for a quick setup — replace with a
+# production schema before relying on long-term retention (see Loki docs).
+# =============================================================================
+loki:
+  enabled: false
+  deploymentMode: SingleBinary
+  singleBinary:
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 10Gi
+  gateway:
+    enabled: false
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  backend:
+    replicas: 0
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
+  lokiCanary:
+    enabled: false
+  test:
+    enabled: false
+  loki:
+    storage:
+      type: filesystem
+    commonConfig:
+      replication_factor: 1
+    useTestSchema: true
+
+# =============================================================================
+# Grafana Alloy (optional) — collects pod logs via Kubernetes API and writes to Loki.
+# Enable with loki.enabled. Replaces Promtail (see Loki “Migrate to Alloy”).
+# Single-replica Deployment: one collector for the whole cluster (avoid duplicate logs).
+# =============================================================================
+alloy:
+  enabled: false
+  crds:
+    create: false
+  controller:
+    type: deployment
+    replicas: 1
+  alloy:
+    enableReporting: false
+    resources: {}
+    configMap:
+      create: true
+      content: |
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+        loki.source.kubernetes "pods" {
+          targets    = discovery.kubernetes.pods.targets
+          forward_to = [loki.write.loki.receiver]
+        }
+
+        loki.write "loki" {
+          endpoint {
+            url = "http://{{ .Release.Name }}-loki:3100/loki/api/v1/push"
+          }
+        }

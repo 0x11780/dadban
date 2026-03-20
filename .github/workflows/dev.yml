@@ -100,6 +100,11 @@ jobs:
         run: |
           helm plugin install https://github.com/jkroepke/helm-secrets
 
+      - name: Helm chart dependencies
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts --force-update
+          helm dependency build ./daadnegar-chart
+
       - name: Setup GPG key
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import

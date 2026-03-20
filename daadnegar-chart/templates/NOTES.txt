@@ -13,6 +13,18 @@ daadnegar has been deployed. Components:
   RabbitMQ AMQP:      {{ include "daadnegar-chart.fullname" . }}-rabbitmq:5672
   RabbitMQ Console:   {{ include "daadnegar-chart.fullname" . }}-rabbitmq:15672
 {{- end }}
+{{- if .Values.grafana.enabled }}
+
+  Grafana UI:         {{ .Release.Name }}-grafana:80 (suggest port-forward 3001:80; app uses 3000)
+{{- end }}
+{{- if .Values.loki.enabled }}
+
+  Loki:               {{ .Release.Name }}-loki:3100 (in-cluster; Grafana datasource when sidecar enabled)
+{{- end }}
+{{- if .Values.alloy.enabled }}
+
+  Alloy (logs→Loki):  {{ .Release.Name }}-alloy (Deployment; pod log collection via K8s API)
+{{- end }}
 
   Application:        {{ include "daadnegar-chart.fullname" . }}:3000
 
@@ -34,6 +46,12 @@ Get the application URL:
   To access the application locally, run:
   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "daadnegar-chart.fullname" . }} 3000:3000
   Then visit http://127.0.0.1:3000
+{{- end }}
+{{- if .Values.grafana.enabled }}
+
+Grafana (ClusterIP only; get admin password from secret {{ .Release.Name }}-grafana):
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-grafana 3001:80
+  Then visit http://127.0.0.1:3001  (user: {{ .Values.grafana.adminUser }})
 {{- end }}
 
 Before first use:

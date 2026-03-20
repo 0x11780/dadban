@@ -1,0 +1,20 @@
+{{- if and .Values.grafana.enabled .Values.loki.enabled .Values.grafana.sidecar.datasources.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "daadnegar-chart.fullname" . }}-grafana-ds-loki
+  labels:
+    {{- include "daadnegar-chart.labels" . | nindent 4 }}
+    grafana_datasource: {{ .Values.grafana.sidecar.datasources.labelValue | quote }}
+data:
+  loki.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        url: http://{{ .Release.Name }}-loki:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          maxLines: 1000
+{{- end }}
