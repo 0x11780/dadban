@@ -187,13 +187,13 @@ existingEnvSecret: ""
 # Sidecar loads the Loki datasource ConfigMap when loki.enabled is true (label must match labelValue).
 # =============================================================================
 grafana:
-  enabled: false
+  enabled: true
   service:
     type: ClusterIP
   ingress:
     enabled: false
   adminUser: admin
-  # adminPassword: set via secrets overlay or --set (omit to let chart generate on first install if supported)
+  adminPassword: adminPassword
   resources: {}
   sidecar:
     datasources:
@@ -207,7 +207,7 @@ grafana:
 # production schema before relying on long-term retention (see Loki docs).
 # =============================================================================
 loki:
-  enabled: false
+  enabled: true
   deploymentMode: SingleBinary
   singleBinary:
     replicas: 1

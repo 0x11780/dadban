@@ -50,6 +50,7 @@ sudo chmod +x /usr/local/bin/sops
 ```bash
 gpg --gen-key
 gpg --list-keys
+gpg --armor --export KEY_ID | base64
 ```
 
 ### 3. Configure SOPS
@@ -136,6 +137,8 @@ For CI/CD, add these repository secrets:
 | `minio.rootPassword`      | MinIO secret key               |
 | `rabbitmq.user`           | RabbitMQ username              |
 | `rabbitmq.password`       | RabbitMQ password              |
+| `grafana.adminUser`       | Grafana login user (often `admin`) |
+| `grafana.adminPassword`   | Grafana admin password         |
 | `env.BETTER_AUTH_SECRET`  | Better Auth secret (32+ bytes) |
 | `env.BOOTSTRAP_SECRET`    | Bootstrap API secret           |
 | `env.BETTER_AUTH_URL`     | Auth callback URL              |

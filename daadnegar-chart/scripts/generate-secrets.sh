@@ -13,6 +13,7 @@ RABBIT_USER=$(openssl rand -hex 12)
 RABBIT_PASS=$(openssl rand -base64 20)
 BETTER_AUTH=$(openssl rand -base64 32)
 BOOTSTRAP=$(openssl rand -base64 24)
+GRAFANA_PASS=$(openssl rand -base64 24)
 
 # Set YOUR_DOMAIN for production URLs, or leave as placeholder
 DOMAIN="${YOUR_DOMAIN:-your-domain.com}"
@@ -34,6 +35,10 @@ minio:
 rabbitmq:
   user: "$RABBIT_USER"
   password: "$RABBIT_PASS"
+
+grafana:
+  adminUser: admin
+  adminPassword: "$GRAFANA_PASS"
 
 env:
   BETTER_AUTH_SECRET: "$BETTER_AUTH"
