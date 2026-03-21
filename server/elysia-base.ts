@@ -4,6 +4,7 @@ import { elysiaHelmet } from "elysiajs-helmet";
 import { ip } from "elysia-ip";
 import { cors } from "@elysiajs/cors";
 import { serverTiming } from "@elysiajs/server-timing";
+import { opentelemetry } from "@elysiajs/opentelemetry";
 
 const ipGenerator: Generator<{ ip: { address: string } }> = (_r, _s, { ip }) =>
   ip?.address ?? "unknown";
@@ -24,10 +25,18 @@ export function createBaseElysia() {
       });
       onError(({ begin, onStop }) => {
         onStop(({ end, error }) => {
-          console.error("Error occurred after trace", error, { duration: end - begin });
+          console.error("Error occurred after trace", error, {
+            duration: end - begin,
+          });
         });
       });
     })
+    .use(
+      opentelemetry({
+        // NodeSDK reads OTEL_EXPORTER_OTLP_* / OTEL_TRACES_EXPORTER / OTEL_SDK_DISABLED from the environment.
+        serviceName: process.env.OTEL_SERVICE_NAME ?? "daadnegar-api",
+      }),
+    )
     .use(
       elysiaHelmet({
         hsts: {
@@ -85,7 +94,10 @@ export function createBaseElysia() {
 
 export function withGlobalHandlers<T extends Elysia>(app: T) {
   return app
-    .get("/health", () => ({ status: "ok", timestamp: new Date().toISOString() }))
+    .get("/health", () => ({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    }))
     .onError(({ code, error, set }) => {
       const msg = error.response;
       const err = error instanceof Error ? error : new Error(String(error));
@@ -95,6 +107,8 @@ export function withGlobalHandlers<T extends Elysia>(app: T) {
       set.status = code === "NOT_FOUND" ? 404 : err.message === "Unauthorized" ? 401 : 500;
 
       set.headers["Content-Type"] = `charset=utf-8`;
+
+      if (code === "VALIDATION") return error.detail(error.message);
 
       return {
         error: { name, message },

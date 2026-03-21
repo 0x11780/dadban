@@ -1,6 +1,6 @@
 # Daadnegar Helm Chart
 
-Helm chart for deploying the **dadban** (daadnegar) Next.js application on Kubernetes with MySQL, MinIO, RabbitMQ, and a background worker.
+Helm chart for deploying the **daadnegar** (daadnegar) Next.js application on Kubernetes with MySQL, MinIO, RabbitMQ, and a background worker.
 
 ## Prerequisites
 
@@ -12,15 +12,15 @@ Helm chart for deploying the **dadban** (daadnegar) Next.js application on Kuber
 
 ## Components
 
-| Component    | Description                              |
-| ------------ | ---------------------------------------- |
-| **App**      | Next.js app (port 3000) with Better Auth |
-| **MySQL**    | Database (daadnegar)                     |
-| **MinIO**    | Object storage for uploads               |
-| **RabbitMQ** | Message queue for background jobs        |
-| **Worker**   | Consumes RabbitMQ, runs cron jobs        |
-| **Grafana**  | Optional UI (subchart, ClusterIP); add datasources (e.g. Loki) as needed |
-| **Loki**     | Optional log aggregation (subchart, ClusterIP); needs a log shipper (this chart uses **Alloy**) or another client |
+| Component    | Description                                                                                                                                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App**      | Next.js app (port 3000) with Better Auth                                                                                                                                                                         |
+| **MySQL**    | Database (daadnegar)                                                                                                                                                                                             |
+| **MinIO**    | Object storage for uploads                                                                                                                                                                                       |
+| **RabbitMQ** | Message queue for background jobs                                                                                                                                                                                |
+| **Worker**   | Consumes RabbitMQ, runs cron jobs                                                                                                                                                                                |
+| **Grafana**  | Optional UI (subchart, ClusterIP); add datasources (e.g. Loki) as needed                                                                                                                                         |
+| **Loki**     | Optional log aggregation (subchart, ClusterIP); needs a log shipper (this chart uses **Alloy**) or another client                                                                                                |
 | **Alloy**    | Optional [Grafana Alloy](https://grafana.com/docs/alloy/latest/) — ships pod logs to Loki (Promtail is deprecated; see [Migrate to Alloy](https://grafana.com/docs/loki/latest/setup/migrate/migrate-to-alloy/)) |
 
 **Do you need Loki?** Only if you want **logs in Grafana** (Explore, dashboards). Grafana alone does not collect or store logs. For **metrics** you would add Prometheus (not included here), not Loki.
@@ -105,46 +105,46 @@ For CI/CD, add these repository secrets:
 
 ### Main Parameters
 
-| Parameter                   | Description     | Default        |
-| --------------------------- | --------------- | -------------- |
-| `replicaCount`              | App replicas    | `1`            |
-| `image.repository`          | Image name      | `daadnegar`    |
-| `image.tag`                 | Image tag       | `""`           |
-| `image.pullPolicy`          | Pull policy     | `IfNotPresent` |
-| `service.type`              | Service type    | `ClusterIP`    |
-| `service.port`              | App port        | `3000`         |
-| `database.enabled`          | Enable MySQL    | `true`         |
-| `database.persistence.size` | MySQL PVC size  | `10Gi`         |
-| `minio.enabled`             | Enable MinIO    | `true`         |
-| `minio.persistence.size`    | MinIO PVC size  | `10Gi`         |
-| `rabbitmq.enabled`          | Enable RabbitMQ | `true`         |
-| `worker.enabled`            | Enable worker   | `false`        |
-| `grafana.enabled`           | Grafana subchart | `false`       |
-| `loki.enabled`              | Loki subchart    | `false`       |
-| `alloy.enabled`             | Grafana Alloy (→ Loki) | `false` |
-| `autoscaling.enabled`       | HPA             | `false`        |
-| `ingress.enabled`           | Ingress         | `true` (see values) |
+| Parameter                   | Description            | Default             |
+| --------------------------- | ---------------------- | ------------------- |
+| `replicaCount`              | App replicas           | `1`                 |
+| `image.repository`          | Image name             | `daadnegar`         |
+| `image.tag`                 | Image tag              | `""`                |
+| `image.pullPolicy`          | Pull policy            | `IfNotPresent`      |
+| `service.type`              | Service type           | `ClusterIP`         |
+| `service.port`              | App port               | `3000`              |
+| `database.enabled`          | Enable MySQL           | `true`              |
+| `database.persistence.size` | MySQL PVC size         | `10Gi`              |
+| `minio.enabled`             | Enable MinIO           | `true`              |
+| `minio.persistence.size`    | MinIO PVC size         | `10Gi`              |
+| `rabbitmq.enabled`          | Enable RabbitMQ        | `true`              |
+| `worker.enabled`            | Enable worker          | `false`             |
+| `grafana.enabled`           | Grafana subchart       | `false`             |
+| `loki.enabled`              | Loki subchart          | `false`             |
+| `alloy.enabled`             | Grafana Alloy (→ Loki) | `false`             |
+| `autoscaling.enabled`       | HPA                    | `false`             |
+| `ingress.enabled`           | Ingress                | `true` (see values) |
 
 ### Secrets (in secrets.yaml)
 
-| Parameter                 | Description                    |
-| ------------------------- | ------------------------------ |
-| `database.rootPassword`   | MySQL root password            |
-| `database.password`       | App DB user password           |
-| `database.database`       | Database name                  |
-| `database.user`           | DB username                    |
-| `minio.rootUser`          | MinIO access key               |
-| `minio.rootPassword`      | MinIO secret key               |
-| `rabbitmq.user`           | RabbitMQ username              |
-| `rabbitmq.password`       | RabbitMQ password              |
+| Parameter                 | Description                        |
+| ------------------------- | ---------------------------------- |
+| `database.rootPassword`   | MySQL root password                |
+| `database.password`       | App DB user password               |
+| `database.database`       | Database name                      |
+| `database.user`           | DB username                        |
+| `minio.rootUser`          | MinIO access key                   |
+| `minio.rootPassword`      | MinIO secret key                   |
+| `rabbitmq.user`           | RabbitMQ username                  |
+| `rabbitmq.password`       | RabbitMQ password                  |
 | `grafana.adminUser`       | Grafana login user (often `admin`) |
-| `grafana.adminPassword`   | Grafana admin password         |
-| `env.BETTER_AUTH_SECRET`  | Better Auth secret (32+ bytes) |
-| `env.BOOTSTRAP_SECRET`    | Bootstrap API secret           |
-| `env.BETTER_AUTH_URL`     | Auth callback URL              |
-| `env.FRONTEND_URL`        | Frontend URL                   |
-| `env.NEXT_PUBLIC_APP_URL` | Public app URL                 |
-| `env.NODE_ENV`            | `production`                   |
+| `grafana.adminPassword`   | Grafana admin password             |
+| `env.BETTER_AUTH_SECRET`  | Better Auth secret (32+ bytes)     |
+| `env.BOOTSTRAP_SECRET`    | Bootstrap API secret               |
+| `env.BETTER_AUTH_URL`     | Auth callback URL                  |
+| `env.FRONTEND_URL`        | Frontend URL                       |
+| `env.NEXT_PUBLIC_APP_URL` | Public app URL                     |
+| `env.NODE_ENV`            | `production`                       |
 
 ## Install / Upgrade
 
